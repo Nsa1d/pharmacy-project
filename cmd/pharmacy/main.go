@@ -19,8 +19,8 @@ func main() {
 	}
 
 	cartRepo := repository.NewCartRepository(db)
-	//medRepo := 
-	//userRepo := 
+	medRepo := repository.NewMedicineRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
 
