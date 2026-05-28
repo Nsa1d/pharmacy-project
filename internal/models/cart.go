@@ -1,6 +1,6 @@
 package models
 
-type Cart struct {
+type CartItem struct {
 	ID           uint    `json:"item_id" gorm:"primarykey"`
 	UserID       uint    `json:"-"`
 	MedicineID   uint    `json:"medicine_id"`
@@ -14,9 +14,9 @@ type CartUpsert struct {
 	Quantity   int  `json:"quantity"`
 }
 
-type CartResponse struct {
+type Cart struct { 
 	UserID     uint    `json:"user_id"`
-	Items      []Cart  `json:"items"`
+	Items      []CartItem  `json:"items"`
 	TotalPrice float64 `json:"total_price"`
 }
 
