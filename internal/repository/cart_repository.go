@@ -7,9 +7,9 @@ import (
 )
 
 type CartRepository interface {
-	Add(userID uint, item *models.Cart) error
+	Add(userID uint, item *models.CartItem) error
 
-	GetAll(userID uint) ([]models.Cart, error)
+	GetAll(userID uint) ([]models.CartItem, error)
 
 	Update(userID uint, itemID uint, quantity int) error
 
@@ -18,9 +18,9 @@ type CartRepository interface {
 	CleanCart(userID uint) error
 
 	//ПРОВЕРЯЕТ, ЕСТЬ ЛИ ТОВАР УЖЕ В КОРЗИНЕ
-	GetItemByMedicine(userID uint, medicineID uint) (*models.Cart, error)
+	GetItemByMedicine(userID uint, medicineID uint) (*models.CartItem, error)
 
-	GetByID(userID uint, itemID uint) (*models.Cart, error)
+	GetByID(userID uint, itemID uint) (*models.CartItem, error)
 }
 
 type gormCartRepository struct {
@@ -31,7 +31,7 @@ func NewCartRepository(db *gorm.DB) CartRepository {
 	return &gormCartRepository{db: db}
 }
 
-func (r *gormCartRepository) Add(userID uint, item *models.Cart) error {
+func (r *gormCartRepository) Add(userID uint, item *models.CartItem) error {
 	if item == nil {
 		return nil
 	}
@@ -39,8 +39,8 @@ func (r *gormCartRepository) Add(userID uint, item *models.Cart) error {
 	return r.db.Create(&item).Error
 }
 
-func (r *gormCartRepository) GetAll(userID uint) ([]models.Cart, error) {
-	var cart []models.Cart
+func (r *gormCartRepository) GetAll(userID uint) ([]models.CartItem, error) {
+	var cart []models.CartItem
 
 	if err := r.db.Where("user_id = ?", userID).Find(&cart).Error; err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (r *gormCartRepository) GetAll(userID uint) ([]models.Cart, error) {
 }
 
 func (r *gormCartRepository) Update(userID uint, itemID uint, quantity int) error {
-	var cart models.Cart
+	var cart models.CartItem
 	if err := r.db.Where("id = ? AND user_id = ?", itemID, userID).First(&cart).Error; err != nil {
 		return err
 	}
@@ -60,15 +60,15 @@ func (r *gormCartRepository) Update(userID uint, itemID uint, quantity int) erro
 }
 
 func (r *gormCartRepository) Delete(userID uint, itemID uint) error {
-	return r.db.Where("id = ? AND user_id = ?", itemID, userID).Delete(&models.Cart{}).Error
+	return r.db.Where("id = ? AND user_id = ?", itemID, userID).Delete(&models.CartItem{}).Error
 }
 
 func (r *gormCartRepository) CleanCart(userID uint) error {
-	return r.db.Where("user_id = ?", userID).Delete(&models.Cart{}).Error
+	return r.db.Where("user_id = ?", userID).Delete(&models.CartItem{}).Error
 }
 
-func (r *gormCartRepository) GetItemByMedicine(userID uint, medicineID uint) (*models.Cart, error) {
-	var cart models.Cart
+func (r *gormCartRepository) GetItemByMedicine(userID uint, medicineID uint) (*models.CartItem, error) {
+	var cart models.CartItem
 	err := r.db.Where("user_id = ? AND medicine_id = ?", userID, medicineID).First(&cart).Error
 	if err != nil {
 		return nil, err
@@ -76,8 +76,8 @@ func (r *gormCartRepository) GetItemByMedicine(userID uint, medicineID uint) (*m
 	return &cart, nil
 }
 
-func (r *gormCartRepository) GetByID(userID uint, itemID uint) (*models.Cart, error) {
-	var cart models.Cart
+func (r *gormCartRepository) GetByID(userID uint, itemID uint) (*models.CartItem, error) {
+	var cart models.CartItem
 	if err := r.db.Where("id = ? AND user_id = ?", itemID, userID).First(&cart).Error; err != nil {
 		return nil, err
 	}

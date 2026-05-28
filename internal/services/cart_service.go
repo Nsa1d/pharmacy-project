@@ -9,7 +9,7 @@ import (
 type CartService interface {
 	AddItem(userID uint, req *models.CartUpsert) (*models.CartUpsert, error)
 
-	GetAllItems(userID uint) (*models.CartResponse, error)
+	GetAllItems(userID uint) (*models.Cart, error)
 
 	UpdateQuantity(userID uint, itemID uint, req *models.CartUpdateQuantity) error
 
@@ -49,7 +49,7 @@ func (s *cartService) AddItem(userID uint, req *models.CartUpsert) (*models.Cart
 		}
 
 		updateReq := &models.CartUpsert{
-			MedicineID: req.MedicineID,
+			MedicineID: exists.MedicineID,
 			Quantity:   newQuantity,
 		}
 
@@ -60,7 +60,7 @@ func (s *cartService) AddItem(userID uint, req *models.CartUpsert) (*models.Cart
 		return updateReq, nil
 	}
 
-	cart := &models.Cart{
+	cart := &models.CartItem{
 		UserID:       userID,
 		MedicineID:   req.MedicineID,
 		Quantity:     req.Quantity,
@@ -75,14 +75,12 @@ func (s *cartService) AddItem(userID uint, req *models.CartUpsert) (*models.Cart
 	return req, nil
 }
 
-func (s *cartService) GetAllItems(userID uint) (*models.CartResponse, error) {
-
-	//ПЕРЕДЕЛАТЬ ЮЗЕРА ПОД GETBYID
-	exists, err := s.user.Exists(userID)
+func (s *cartService) GetAllItems(userID uint) (*models.Cart, error) {
+	exists, err := s.user.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
+	if exists == nil {
 		return nil, apperrors.ErrUserNotFound
 	}
 
@@ -96,14 +94,14 @@ func (s *cartService) GetAllItems(userID uint) (*models.CartResponse, error) {
 	}
 
 	var total float64
-	responseItems := make([]models.Cart, 0, len(items))
+	responseItems := make([]models.CartItem, 0, len(items))
 
 	for _, v := range items {
 		total += v.LineTotal
 		responseItems = append(responseItems, v)
 	}
 
-	return &models.CartResponse{
+	return &models.Cart{
 		UserID:     userID,
 		Items:      responseItems,
 		TotalPrice: total,
@@ -119,13 +117,11 @@ func (s *cartService) UpdateQuantity(userID uint, itemID uint, req *models.CartU
 }
 
 func (s *cartService) DeleteItem(userID uint, itemID uint) error {
-
-	//ПЕРЕДЕЛАТЬ ЮЗЕРА ПОД GETBYID
-	exists, err := s.user.Exists(userID)
+	exists, err := s.user.GetByID(userID)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if exists == nil {
 		return apperrors.ErrUserNotFound
 	}
 
@@ -138,13 +134,11 @@ func (s *cartService) DeleteItem(userID uint, itemID uint) error {
 }
 
 func (s *cartService) validateItem(userID uint, req *models.CartUpsert) (*models.Medicine, error) {
-
-	//ПЕРЕДЕЛАТЬ ЮЗЕРА ПОД GETBYID
-	exists, err := s.user.Exists(userID)
+	exists, err := s.user.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
+	if exists == nil {
 		return nil, apperrors.ErrUserNotFound
 	}
 
