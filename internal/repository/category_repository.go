@@ -1,15 +1,22 @@
 package repository
 
 import (
+	"errors"
 	"pharmacy-project/internal/models"
 
 	"gorm.io/gorm"
 )
 
 type CategoryRepository interface {
-	GetAllCat() error
-	GetSubCategoryByCat(id uint) error
-	GetMedByCategory(categoryID uint) error
+	GetAllCat() ([]models.Category, error)
+
+	GetSubCategoryByCat(id uint) ([]models.SubCategory, error)
+
+	GetMedByCategory(categoryID uint) ([]models.Medicine, error)
+
+	CreateCategory(req models.CategoryUpsert) error
+
+	CreateSubCategory(req models.SubCategoryUpsert) error
 }
 
 type gormCategoryRepository struct {
@@ -20,14 +27,40 @@ func NewCategoryRepository(db *gorm.DB) CategoryRepository {
 	return &gormCategoryRepository{db: db}
 }
 
-func (r *gormCategoryRepository) GetAllCat() error {
-	return r.db.Find(&models.Category{}).Error
+func (r *gormCategoryRepository) GetAllCat() ([]models.Category, error) {
+	var category []models.Category
+	if err := r.db.Find(&category).Error; err != nil {
+		return nil, err
+	}
+	return category, nil
 }
 
-func (r *gormCategoryRepository) GetSubCategoryByCat(id uint) error {
-	return r.db.Find(&models.Category{}, id).Error
+func (r *gormCategoryRepository) GetSubCategoryByCat(id uint) ([]models.SubCategory, error) {
+	var category []models.SubCategory
+	if err := r.db.Find(&category, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return category, nil
 }
 
-func (r *gormCategoryRepository) GetMedByCategory(categoryID uint) error {
-	return r.db.Find(&models.Medicine{}, categoryID).Error
+func (r *gormCategoryRepository) GetMedByCategory(categoryID uint) ([]models.Medicine, error) {
+	var medicine []models.Medicine
+	if err := r.db.Where("CategoryID = ?", categoryID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return medicine, nil
+}
+
+func (r *gormCategoryRepository) CreateCategory(req models.CategoryUpsert) error {
+	return r.db.Create(&req).Error
+}
+
+func (r *gormCategoryRepository) CreateSubCategory(req models.SubCategoryUpsert) error {
+	return r.db.Create(&req).Error
 }

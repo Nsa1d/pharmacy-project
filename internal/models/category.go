@@ -1,14 +1,15 @@
 package models
 
 type Category struct {
-	ID   uint   `gorm:"unique"`
+	ID   uint   `gorm:"primaryKey"`
 	Name string `json:"name"`
 }
 
 type SubCategory struct {
-	ID         uint   `gorm:"unique"`
-	Name       string `json:"name"`
-	CategoryID uint   `json:"categoryID"`
+	ID         uint     `gorm:"primaryKey"`
+	Name       string   `json:"name"`
+	CategoryID uint     `json:"categoryID"`
+	Category   Category `gorm:"foreignKey:categoryID" json:"category"`
 }
 
 type CategoryUpsert struct {
