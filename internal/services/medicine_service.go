@@ -9,8 +9,8 @@ type MedicineService interface {
 	GetAll() (*[]models.Medicine, error)
 	GetByID(id uint) (*models.Medicine, error)
 	DeleteByID(id uint) error
-	CreateMed(req models.MedCreateRequest) error
-	PatchMed(id uint, req models.MedUpdateRequest) error
+	CreateMed(req models.MedCreateRequest) (*models.Medicine, error)
+	PatchMed(id uint, req models.MedUpdateRequest) (*models.Medicine, error)
 }
 
 type medicineService struct {
@@ -45,7 +45,7 @@ func (s *medicineService) DeleteByID(id uint) error {
 	return nil
 }
 
-func (s *medicineService) CreateMed(req models.MedCreateRequest) error {
+func (s *medicineService) CreateMed(req models.MedCreateRequest) (*models.Medicine, error) {
 	medicine := &models.Medicine{
 		Name:                 req.Name,
 		Description:          req.Description,
@@ -60,12 +60,12 @@ func (s *medicineService) CreateMed(req models.MedCreateRequest) error {
 	}
 
 	if err := s.medicine.CreateMed(*medicine); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return medicine, nil
 }
 
-func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) error {
+func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) (*models.Medicine, error) {
 	medicine := &models.Medicine{
 		Name:                 req.Name,
 		Description:          req.Description,
@@ -79,9 +79,9 @@ func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) error {
 		AvgRating:            req.AvgRating,
 	}
 	if err := s.medicine.MedUpdate(id, *medicine); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return medicine, nil
 }
 
 func (s *medicineService) validatePost(req models.MedCreateRequest) error {

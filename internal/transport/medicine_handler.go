@@ -60,12 +60,13 @@ func (h *MedicineHandler) CreateMedicine(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.CreateMed(req); err != nil {
+	medicine, err := h.service.CreateMed(req)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "лекарство добавлено"})
+	c.JSON(http.StatusCreated, medicine)
 }
 
 func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
@@ -79,12 +80,13 @@ func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.service.PatchMed(uint(id), req); err != nil {
+	medicine, err := h.service.PatchMed(uint(id), req)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "данные лекарства обновлены"})
+	c.JSON(http.StatusOK, medicine)
 }
 
 func (h *MedicineHandler) DeleteMedicine(c *gin.Context) {
