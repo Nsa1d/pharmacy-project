@@ -14,8 +14,8 @@ type MedicineService interface {
 	GetAll() (*[]models.Medicine, error)
 	GetByID(id uint) (*models.Medicine, error)
 	DeleteByID(id uint) error
-	CreateMed(req models.MedCreateRequest) (*models.Medicine, error)
-	PatchMed(id uint, req models.MedUpdateRequest) (*models.Medicine, error)
+	CreateMed(req models.MedUpsertRequest) (*models.Medicine, error)
+	PatchMed(id uint, req models.MedUpsertRequest) (*models.Medicine, error)
 }
 
 type medicineService struct {
@@ -54,8 +54,8 @@ func (s *medicineService) DeleteByID(id uint) error {
 	return nil
 }
 
-func (s *medicineService) CreateMed(req models.MedCreateRequest) (*models.Medicine, error) {
-	if err := s.validatePost(req); err != nil {
+func (s *medicineService) CreateMed(req models.MedUpsertRequest) (*models.Medicine, error) {
+	if err := s.validateUpsert(req); err != nil {
 		return nil, err
 	}
 
@@ -82,8 +82,8 @@ func (s *medicineService) CreateMed(req models.MedCreateRequest) (*models.Medici
 	return medicine, nil
 }
 
-func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) (*models.Medicine, error) {
-	if err := s.validatePatch(req); err != nil {
+func (s *medicineService) PatchMed(id uint, req models.MedUpsertRequest) (*models.Medicine, error) {
+	if err := s.validateUpsert(req); err != nil {
 		return nil, err
 	}
 
@@ -113,40 +113,7 @@ func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) (*model
 	return medicine, nil
 }
 
-func (s *medicineService) validatePost(req models.MedCreateRequest) error {
-	name := strings.TrimSpace(req.Name)
-	manufacturer := strings.TrimSpace(req.Manufacturer)
-
-	pattern := `^[a-zA-Zа-яА-Я0-9.,]+$`
-	patternValid := regexp.MustCompile(pattern)
-
-	if !patternValid.MatchString(name) {
-		return errors.New("название не должно содержать спец символов")
-	}
-	if !patternValid.MatchString(manufacturer) {
-		return errors.New("название производства не должно содержать спец символов")
-	}
-	if !patternValid.MatchString(req.Description) {
-		return errors.New("описание не должно содержать спец символов")
-	}
-
-	if len(name) == 0 {
-		return errors.New("название не должно быть пустым")
-	}
-	if len(manufacturer) == 0 {
-		return errors.New("название производства не должно быть пустым")
-	}
-	if len(req.Description) == 0 {
-		return errors.New("описание не должно быть пустым")
-	}
-
-	if req.Price == 0 {
-		return errors.New("цена должна быть больше нуля")
-	}
-	return nil
-}
-
-func (s *medicineService) validatePatch(req models.MedUpdateRequest) error {
+func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
 	name := strings.TrimSpace(req.Name)
 	manufacturer := strings.TrimSpace(req.Manufacturer)
 

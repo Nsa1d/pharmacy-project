@@ -16,19 +16,7 @@ type Medicine struct {
 	AvgRating            float64 `json:"avg_rating"`
 }
 
-type MedCreateRequest struct {
-	Name                 string  `json:"name"`
-	Description          string  `json:"description"`
-	Price                int     `json:"price"`
-	StockQuantity        int     `json:"stock_quantity"`
-	CategoryID           uint    `json:"category_id"`
-	SubcategoryID        uint    `json:"subcategory_id"`
-	Manufacturer         string  `json:"manufacturer"`
-	PrescriptionRequired bool    `json:"prescription_required"`
-	AvgRating            float64 `json:"avg_rating"`
-}
-
-type MedUpdateRequest struct {
+type MedUpsertRequest struct {
 	Name                 string  `json:"name"`
 	Description          string  `json:"description"`
 	Price                int     `json:"price"`
