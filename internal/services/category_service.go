@@ -14,7 +14,7 @@ type CategoryService interface {
 
 	CreateCategory(req models.CategoryUpsert) (*models.Category, error)
 
-	CreateSubCategory(req models.SubCategory) (*models.SubCategory, error)
+	CreateSubCategory(req models.SubCategoryUpsert) (*models.SubCategory, error)
 }
 
 type categoryService struct {
@@ -57,7 +57,7 @@ func (s *categoryService) CreateCategory(req models.CategoryUpsert) (*models.Cat
 	return category, nil
 }
 
-func (s *categoryService) CreateSubCategory(req models.SubCategory) (*models.SubCategory, error) {
+func (s *categoryService) CreateSubCategory(req models.SubCategoryUpsert) (*models.SubCategory, error) {
 	subCategory := &models.SubCategory{
 		Name:       req.Name,
 		CategoryID: req.CategoryID,
