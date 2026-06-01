@@ -20,7 +20,6 @@ type MedCreateRequest struct {
 	Name                 string  `json:"name"`
 	Description          string  `json:"description"`
 	Price                int     `json:"price"`
-	InStock              bool    `json:"in_stock"`
 	StockQuantity        int     `json:"stock_quantity"`
 	CategoryID           uint    `json:"category_id"`
 	SubcategoryID        uint    `json:"subcategory_id"`
@@ -33,7 +32,6 @@ type MedUpdateRequest struct {
 	Name                 string  `json:"name"`
 	Description          string  `json:"description"`
 	Price                int     `json:"price"`
-	InStock              bool    `json:"in_stock"`
 	StockQuantity        int     `json:"stock_quantity"`
 	CategoryID           uint    `json:"category_id"`
 	SubcategoryID        uint    `json:"subcategory_id"`
