@@ -1,4 +1,4 @@
-package pharmacy
+package main
 
 import (
 	"log"
@@ -14,18 +14,21 @@ import (
 func main() {
 	db := config.SetUpDatabaseConnection()
 
-	if err := db.AutoMigrate(&models.Medicine{}); err != nil {
-		log.Fatal("не удалось выполнить миграции: %v", err)
+	if err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}); err != nil {
+		log.Fatalf("не удалось выполнить миграции: %v", err)
 	}
 
-	medicineRepo := repository.NewMedicineRepository(db)
+	cartRepo := repository.NewCartRepository(db)
+	medRepo := repository.NewMedicineRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
-	medicineService := services.NewMedicineService(medicineRepo)
-
+	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
+  medService := services.NewMedicineService(medRepo)
+  
 	router := gin.Default()
-	transport.RegisterRoutes(router, medicineService)
+	transport.RegisterRoutes(router, cartService, medService)
 
 	if err := router.Run(); err != nil {
-		log.Fatal("не удалось запустить HTTP-сервер: %v", err)
+		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)
 	}
 }
