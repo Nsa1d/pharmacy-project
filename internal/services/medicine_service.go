@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const pattern = `^[a-zA-Zа-яА-Я0-9., ]+$`
+
 type MedicineService interface {
 	GetAll() ([]models.Medicine, error)
 	GetByID(id uint) (*models.Medicine, error)
@@ -111,13 +113,11 @@ func (s *medicineService) PatchMed(id uint, req models.MedUpsertRequest) (*model
 }
 
 func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
-	name := strings.TrimSpace(req.Name)
 	manufacturer := strings.TrimSpace(req.Manufacturer)
 
-	pattern := `^[a-zA-Zа-яА-Я0-9.,]+$`
 	patternValid := regexp.MustCompile(pattern)
 
-	if !patternValid.MatchString(name) {
+	if !patternValid.MatchString(req.Name) {
 		return errors.New("название не должно содержать спец символов")
 	}
 	if !patternValid.MatchString(manufacturer) {

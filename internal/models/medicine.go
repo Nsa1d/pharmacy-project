@@ -19,7 +19,7 @@ type Medicine struct {
 type MedUpsertRequest struct {
 	Name                 string `json:"name" binding:"required"`
 	Description          string `json:"description" binding:"required"`
-	Price                int    `json:"price"`
+	Price                int    `json:"price" binding:"required,gt=0"`
 	StockQuantity        int    `json:"stock_quantity"`
 	CategoryID           uint   `json:"category_id" binding:"required"`
 	SubcategoryID        uint   `json:"subcategory_id" binding:"required"`
