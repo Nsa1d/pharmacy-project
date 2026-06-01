@@ -11,7 +11,7 @@ import (
 )
 
 type MedicineService interface {
-	GetAll() (*[]models.Medicine, error)
+	GetAll() ([]models.Medicine, error)
 	GetByID(id uint) (*models.Medicine, error)
 	DeleteByID(id uint) error
 	CreateMed(req models.MedUpsertRequest) (*models.Medicine, error)
@@ -26,13 +26,13 @@ func NewMedicineService(service repository.MedicineRepository) MedicineService {
 	return &medicineService{medicine: service}
 }
 
-func (s *medicineService) GetAll() (*[]models.Medicine, error) {
+func (s *medicineService) GetAll() ([]models.Medicine, error) {
 	med, err := s.medicine.GetAll()
 	if err != nil {
 
 		return nil, err
 	}
-	return &med, nil
+	return med, nil
 }
 
 func (s *medicineService) GetByID(id uint) (*models.Medicine, error) {
@@ -116,16 +116,6 @@ func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
 
 	pattern := `^[a-zA-Zа-яА-Я0-9.,]+$`
 	patternValid := regexp.MustCompile(pattern)
-
-	if len(name) == 0 {
-		return errors.New("название не должно быть пустым")
-	}
-	if len(manufacturer) == 0 {
-		return errors.New("название производства не должно быть пустым")
-	}
-	if len(req.Description) == 0 {
-		return errors.New("описание не должно быть пустым")
-	}
 
 	if !patternValid.MatchString(name) {
 		return errors.New("название не должно содержать спец символов")
