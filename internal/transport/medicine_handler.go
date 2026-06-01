@@ -75,7 +75,7 @@ func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var req models.MedUpdateRequest
+	var req models.MedUpsertRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
