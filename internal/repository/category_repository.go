@@ -10,7 +10,7 @@ import (
 type CategoryRepository interface {
 	GetAllCat() ([]models.Category, error)
 
-	GetSubCategoryByCat(id uint) ([]models.SubCategory, error)
+	GetSubCategoryByCat(categoryID uint) ([]models.SubCategory, error)
 
 	GetMedByCategory(categoryID uint) ([]models.Medicine, error)
 
@@ -35,9 +35,9 @@ func (r *gormCategoryRepository) GetAllCat() ([]models.Category, error) {
 	return category, nil
 }
 
-func (r *gormCategoryRepository) GetSubCategoryByCat(id uint) ([]models.SubCategory, error) {
+func (r *gormCategoryRepository) GetSubCategoryByCat(categoryID uint) ([]models.SubCategory, error) {
 	var category []models.SubCategory
-	if err := r.db.Where("category_id = ?", id).Find(&category).Error; err != nil {
+	if err := r.db.Where("category_id = ?", categoryID).Find(&category).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
 		}
