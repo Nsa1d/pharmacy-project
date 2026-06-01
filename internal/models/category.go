@@ -9,7 +9,7 @@ type SubCategory struct {
 	ID         uint     `gorm:"primaryKey"`
 	Name       string   `json:"name"`
 	CategoryID uint     `json:"categoryID"`
-	Category   Category `gorm:"foreignKey:categoryID" json:"category"`
+	Category   Category `gorm:"foreignKey:CategoryID" json:"category"`
 }
 
 type CategoryUpsert struct {

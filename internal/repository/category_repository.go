@@ -37,7 +37,7 @@ func (r *gormCategoryRepository) GetAllCat() ([]models.Category, error) {
 
 func (r *gormCategoryRepository) GetSubCategoryByCat(id uint) ([]models.SubCategory, error) {
 	var category []models.SubCategory
-	if err := r.db.Where("CategoryID = ?", id).Find(&category).Error; err != nil {
+	if err := r.db.Where("category_id = ?", id).Find(&category).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
 		}
@@ -48,7 +48,7 @@ func (r *gormCategoryRepository) GetSubCategoryByCat(id uint) ([]models.SubCateg
 
 func (r *gormCategoryRepository) GetMedByCategory(categoryID uint) ([]models.Medicine, error) {
 	var medicine []models.Medicine
-	if err := r.db.Where("CategoryID = ?", categoryID).Find(&medicine).Error; err != nil {
+	if err := r.db.Where("category_id = ?", categoryID).Find(&medicine).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
 		}
