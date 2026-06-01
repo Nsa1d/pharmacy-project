@@ -19,11 +19,11 @@ func NewMedicineHandler(service services.MedicineService) *MedicineHandler {
 func (h *MedicineHandler) RegisterRoutes(r *gin.Engine) {
 	medicine := r.Group("/medicine")
 	{
-		medicine.GET("")
-		medicine.GET("/:id")
-		medicine.POST("")
-		medicine.PATCH("/:id")
-		medicine.DELETE("/:id")
+		medicine.GET("", h.GetAll)
+		medicine.GET("/:id", h.GetByID)
+		medicine.POST("", h.CreateMedicine)
+		medicine.PATCH("/:id", h.UpdateMedicine)
+		medicine.DELETE("/:id", h.DeleteMedicine)
 	}
 }
 
@@ -77,7 +77,7 @@ func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
 	}
 	var req models.MedUpsertRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	medicine, err := h.service.PatchMed(uint(id), req)

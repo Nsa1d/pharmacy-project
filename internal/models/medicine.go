@@ -17,13 +17,12 @@ type Medicine struct {
 }
 
 type MedUpsertRequest struct {
-	Name                 string  `json:"name"`
-	Description          string  `json:"description"`
-	Price                int     `json:"price"`
-	StockQuantity        int     `json:"stock_quantity"`
-	CategoryID           uint    `json:"category_id"`
-	SubcategoryID        uint    `json:"subcategory_id"`
-	Manufacturer         string  `json:"manufacturer"`
-	PrescriptionRequired bool    `json:"prescription_required"`
-	AvgRating            float64 `json:"avg_rating"`
+	Name                 string `json:"name" binding:"required"`
+	Description          string `json:"description" binding:"required"`
+	Price                int    `json:"price" binding:"required"`
+	StockQuantity        int    `json:"stock_quantity"`
+	CategoryID           uint   `json:"category_id" binding:"required"`
+	SubcategoryID        uint   `json:"subcategory_id" binding:"required"`
+	Manufacturer         string `json:"manufacturer" binding:"required"`
+	PrescriptionRequired bool   `json:"prescription_required" binding:"required"`
 }

@@ -51,5 +51,5 @@ func (r *gormMedicineRepository) CreateMed(req models.Medicine) error {
 }
 
 func (r *gormMedicineRepository) MedUpdate(id uint, req models.Medicine) error {
-	return r.db.First(&models.Medicine{}, id).Updates(&req).Error
+	return r.db.Model(&models.Medicine{}).Where("id = ?", id).Updates(&req).Error
 }

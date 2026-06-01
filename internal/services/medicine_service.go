@@ -27,16 +27,15 @@ func NewMedicineService(service repository.MedicineRepository) MedicineService {
 }
 
 func (s *medicineService) GetAll() (*[]models.Medicine, error) {
-	med, err := s.GetAll()
+	med, err := s.medicine.GetAll()
 	if err != nil {
 
 		return nil, err
 	}
-	return med, nil
+	return &med, nil
 }
 
 func (s *medicineService) GetByID(id uint) (*models.Medicine, error) {
-	var med *models.Medicine
 	med, err := s.medicine.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -48,7 +47,7 @@ func (s *medicineService) DeleteByID(id uint) error {
 	if _, err := s.medicine.GetByID(id); err != nil {
 		return gorm.ErrRecordNotFound
 	}
-	if err := s.DeleteByID(id); err != nil {
+	if err := s.medicine.DeleteByID(id); err != nil {
 		return err
 	}
 	return nil
@@ -73,7 +72,6 @@ func (s *medicineService) CreateMed(req models.MedUpsertRequest) (*models.Medici
 		SubcategoryID:        req.SubcategoryID,
 		Manufacturer:         req.Manufacturer,
 		PrescriptionRequired: req.PrescriptionRequired,
-		AvgRating:            req.AvgRating,
 	}
 
 	if err := s.medicine.CreateMed(*medicine); err != nil {
@@ -105,7 +103,6 @@ func (s *medicineService) PatchMed(id uint, req models.MedUpsertRequest) (*model
 		SubcategoryID:        req.SubcategoryID,
 		Manufacturer:         req.Manufacturer,
 		PrescriptionRequired: req.PrescriptionRequired,
-		AvgRating:            req.AvgRating,
 	}
 	if err := s.medicine.MedUpdate(id, *medicine); err != nil {
 		return nil, err
@@ -120,16 +117,6 @@ func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
 	pattern := `^[a-zA-Zа-яА-Я0-9.,]+$`
 	patternValid := regexp.MustCompile(pattern)
 
-	if !patternValid.MatchString(name) {
-		return errors.New("название не должно содержать спец символов")
-	}
-	if !patternValid.MatchString(manufacturer) {
-		return errors.New("название производства не должно содержать спец символов")
-	}
-	if !patternValid.MatchString(req.Description) {
-		return errors.New("описание не должно содержать спец символов")
-	}
-
 	if len(name) == 0 {
 		return errors.New("название не должно быть пустым")
 	}
@@ -140,7 +127,17 @@ func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
 		return errors.New("описание не должно быть пустым")
 	}
 
-	if req.Price == 0 {
+	if !patternValid.MatchString(name) {
+		return errors.New("название не должно содержать спец символов")
+	}
+	if !patternValid.MatchString(manufacturer) {
+		return errors.New("название производства не должно содержать спец символов")
+	}
+	if !patternValid.MatchString(req.Description) {
+		return errors.New("описание не должно содержать спец символов")
+	}
+
+	if req.Price <= 0 {
 		return errors.New("цена должна быть больше нуля")
 	}
 	return nil
