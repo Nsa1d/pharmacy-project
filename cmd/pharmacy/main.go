@@ -23,9 +23,10 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
-
+  medService := services.NewMedicineService(medRepo)
+  
 	router := gin.Default()
-	transport.RegisterRoutes(router, cartService)
+	transport.RegisterRoutes(router, cartService, medService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)
