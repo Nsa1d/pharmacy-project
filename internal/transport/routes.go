@@ -9,8 +9,14 @@ import (
 func RegisterRoutes(
 	router *gin.Engine,
 	cartService services.CartService,
+	orderService services.OrderService,
+	paymentService services.PaymentService,
 ) {
-	cartHadler := NewCartHandler(cartService)
+	cartHandler := NewCartHandler(cartService)
+	orderHandler := NewOrderHandler(orderService)
+	paymentHandler := NewPaymentHandler(paymentService)
 
-	cartHadler.RegisterRoutes(router)
+	cartHandler.RegisterRoutes(router)
+	orderHandler.RegisterRoutes(router)
+	paymentHandler.RegisterRoutes(router)
 }

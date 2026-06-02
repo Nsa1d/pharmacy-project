@@ -1,9 +1,10 @@
 package models
 
 type CartItem struct {
-	ID           uint    `json:"item_id" gorm:"primarykey"`
+	ID           uint    `json:"item_id" gorm:"primaryKey"`
 	UserID       uint    `json:"-"`
 	MedicineID   uint    `json:"medicine_id"`
+	MedicineName string  `json:"medicine_name"`
 	Quantity     int     `json:"quantity"`
 	PricePerUnit int     `json:"price_per_unit"`
 	LineTotal    float64 `json:"line_total"`
@@ -14,10 +15,10 @@ type CartUpsert struct {
 	Quantity   int  `json:"quantity"`
 }
 
-type Cart struct { 
-	UserID     uint    `json:"user_id"`
-	Items      []CartItem  `json:"items"`
-	TotalPrice float64 `json:"total_price"`
+type Cart struct {
+	UserID     uint       `json:"user_id"`
+	Items      []CartItem `json:"items"`
+	TotalPrice float64    `json:"total_price"`
 }
 
 type CartUpdateQuantity struct {

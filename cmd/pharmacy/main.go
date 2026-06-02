@@ -14,18 +14,28 @@ import (
 func main() {
 	db := config.SetUpDatabaseConnection()
 
-	if err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}); err != nil {
-		log.Fatalf("не удалось выполнить миграции: %v", err)
-	}
-
+	db.AutoMigrate(
+		&models.CartItem{},
+		&models.User{},
+		&models.Medicine{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.Promocode{},
+		&models.Payment{},
+	)
 	cartRepo := repository.NewCartRepository(db)
 	medRepo := repository.NewMedicineRepository(db)
 	userRepo := repository.NewUserRepository(db)
+	orderRepo := repository.NewOrderRepository(db)
+	promocodeRepo := repository.NewPromocodeRepository(db)
+	paymentRepo := repository.NewPaymentRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
+	orderService := services.NewOrderService(orderRepo, cartRepo, medRepo, userRepo, promocodeRepo, paymentRepo)
+	paymentService := services.NewPaymentService(paymentRepo, orderRepo, cartRepo)
 
 	router := gin.Default()
-	transport.RegisterRoutes(router, cartService)
+	transport.RegisterRoutes(router, cartService, orderService, paymentService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)
