@@ -58,9 +58,9 @@ func (r *gormCategoryRepository) GetMedByCategory(categoryID uint) ([]models.Med
 }
 
 func (r *gormCategoryRepository) CreateCategory(req *models.Category) error {
-	return r.db.Create(&req).Error
+	return r.db.Create(req).Error
 }
 
 func (r *gormCategoryRepository) CreateSubCategory(req *models.SubCategory) error {
-	return r.db.Create(&req).Error
+	return r.db.Create(req).Error
 }

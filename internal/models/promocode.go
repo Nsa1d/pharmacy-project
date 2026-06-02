@@ -18,7 +18,7 @@ type Promocode struct {
 	Code          string    `gorm:"unique" json:"code" binding:"required"`
 	Description   string    `json:"description" binding:"required"`
 	DiscountType  Discount  `json:"discountType" binding:"required"`
-	DiscountValue int       `json:"discountValue" binding:"required, gt=0"`
+	DiscountValue int       `json:"discountValue" binding:"required,gt=0"`
 	ValidFrom     time.Time `json:"validFrom" binding:"required"`
 	ValidTo       time.Time `json:"validTo" binding:"required"`
 	IsActive      bool      `json:"isActive"`

@@ -8,7 +8,7 @@ import (
 )
 
 type PromocodeRepository interface {
-	Create(req models.Promocode) error
+	Create(req *models.Promocode) error
 
 	GetAll() ([]models.Promocode, error)
 }
@@ -21,7 +21,7 @@ func NewPromocodeRepository(db *gorm.DB) PromocodeRepository {
 	return &gormPromocodeRepository{db: db}
 }
 
-func (r *gormPromocodeRepository) Create(req models.Promocode) error {
+func (r *gormPromocodeRepository) Create(req *models.Promocode) error {
 	return r.db.Create(&req).Error
 }
 
