@@ -13,10 +13,10 @@ type SubCategory struct {
 }
 
 type CategoryUpsert struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
 }
 
 type SubCategoryUpsert struct {
-	Name       string `json:"name"`
+	Name       string `json:"name" binding:"required"`
 	CategoryID uint   `json:"categoryID"`
 }
