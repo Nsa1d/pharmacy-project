@@ -51,7 +51,7 @@ func (s *categoryService) GetMedByCategory(categoryID uint) ([]models.Medicine, 
 
 func (s *categoryService) CreateCategory(req models.CategoryUpsert) (*models.Category, error) {
 	category := &models.Category{Name: req.Name}
-	if err := s.category.CreateCategory(*category); err != nil {
+	if err := s.category.CreateCategory(category); err != nil {
 		return nil, err
 	}
 	return category, nil
@@ -65,7 +65,7 @@ func (s *categoryService) CreateSubCategory(categoryID uint, req models.SubCateg
 		Name:       req.Name,
 		CategoryID: categoryID,
 	}
-	if err := s.category.CreateSubCategory(*subCategory); err != nil {
+	if err := s.category.CreateSubCategory(subCategory); err != nil {
 		return nil, err
 	}
 	return subCategory, nil

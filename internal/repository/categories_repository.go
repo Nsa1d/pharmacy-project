@@ -14,9 +14,9 @@ type CategoryRepository interface {
 
 	GetMedByCategory(categoryID uint) ([]models.Medicine, error)
 
-	CreateCategory(req models.Category) error
+	CreateCategory(req *models.Category) error
 
-	CreateSubCategory(req models.SubCategory) error
+	CreateSubCategory(req *models.SubCategory) error
 }
 
 type gormCategoryRepository struct {
@@ -57,10 +57,10 @@ func (r *gormCategoryRepository) GetMedByCategory(categoryID uint) ([]models.Med
 	return medicine, nil
 }
 
-func (r *gormCategoryRepository) CreateCategory(req models.Category) error {
+func (r *gormCategoryRepository) CreateCategory(req *models.Category) error {
 	return r.db.Create(&req).Error
 }
 
-func (r *gormCategoryRepository) CreateSubCategory(req models.SubCategory) error {
+func (r *gormCategoryRepository) CreateSubCategory(req *models.SubCategory) error {
 	return r.db.Create(&req).Error
 }
