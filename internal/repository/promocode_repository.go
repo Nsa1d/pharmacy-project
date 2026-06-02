@@ -22,7 +22,7 @@ func NewPromocodeRepository(db *gorm.DB) PromocodeRepository {
 }
 
 func (r *gormPromocodeRepository) Create(req *models.Promocode) error {
-	return r.db.Create(&req).Error
+	return r.db.Create(req).Error
 }
 
 func (r *gormPromocodeRepository) GetAll() ([]models.Promocode, error) {

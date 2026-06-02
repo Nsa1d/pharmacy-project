@@ -19,8 +19,8 @@ func NewPromocodeHandler(promocode services.PromocodeService) *PromocodeHandler 
 func (h *PromocodeHandler) RegisterRoutes(r *gin.Engine) {
 	promo := r.Group("/promocode")
 	{
-		promo.GET("")
-		promo.POST("")
+		promo.GET("", h.GetAll)
+		promo.POST("", h.CreatePromo)
 	}
 }
 
