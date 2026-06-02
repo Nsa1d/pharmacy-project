@@ -8,11 +8,16 @@ import (
 
 func RegisterRoutes(
 	router *gin.Engine,
-  medService services.MedicineService,
+	medService services.MedicineService,
 	cartService services.CartService,
+	userService services.UserService,
 ) {
-  medHandler := NewMedicineHandler(medicineService)
+	medHandler := NewMedicineHandler(medService)
 	cartHadler := NewCartHandler(cartService)
+	userHandler := NewUserHandler(userService)
 
 	cartHadler.RegisterRoutes(router)
+	userHandler.RegisterRoutes(router)
+	medHandler.RegisterRoutes(router)
+
 }

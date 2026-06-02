@@ -1,13 +1,11 @@
 package services
 
 import (
-	"errors"
 	"pharmacy-project/internal/apperrors"
 	"pharmacy-project/internal/models"
 	"pharmacy-project/internal/repository"
 	"strings"
 )
-
 
 type UserService interface {
 	CreateUser(req models.UserCreateRequest) (*models.User, error)
@@ -87,31 +85,31 @@ func (u *userService) validateUserCreate(req models.UserCreateRequest) error {
 	address := strings.TrimSpace(req.DefaultAddress)
 
 	if fullName == "" {
-		return errors.New("поле full_name не должно быть пустым")
+		return apperrors.ErrInvalidUserInput
 	}
 	if len([]rune(fullName)) < 2 {
-		return errors.New("поле full_name должно содержать минимум 2 символа")
+		return apperrors.ErrInvalidUserInput
 	}
 
 	if email == "" {
-		return errors.New("поле email не должно быть пустым")
+		return apperrors.ErrInvalidUserInput
 	}
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
-		return errors.New("поле email должно быть корректным email-адресом")
+		return apperrors.ErrInvalidUserInput
 	}
 
 	if phone == "" {
-		return errors.New("поле phone не должно быть пустым")
+		return apperrors.ErrInvalidUserInput
 	}
 	if len([]rune(phone)) < 10 || len([]rune(phone)) > 20 {
-		return errors.New("поле phone должно содержать от 10 до 20 символов")
+		return apperrors.ErrInvalidUserInput
 	}
 
 	if address == "" {
-		return errors.New("поле default_address не должно быть пустым")
+		return apperrors.ErrInvalidUserInput
 	}
 	if len([]rune(address)) < 5 {
-		return errors.New("поле default_address должно содержать минимум 5 символов")
+		return apperrors.ErrInvalidUserInput
 	}
 
 	return nil
