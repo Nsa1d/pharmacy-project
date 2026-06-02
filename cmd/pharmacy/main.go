@@ -20,22 +20,25 @@ func (noopPurchaseValidator) UserPurchasedMedicine(userID, medicineID uint) (boo
 func main() {
 	db := config.SetUpDatabaseConnection()
 
+	if err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}, &models.Category{}, &models.SubCategory{}); err != nil {
 	if err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}, &models.Review{}); err != nil {
 		log.Fatalf("не удалось выполнить миграции: %v", err)
 	}
 
 	cartRepo := repository.NewCartRepository(db)
 	medRepo := repository.NewMedicineRepository(db)
+	catRepo := repository.NewCategoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	reviewRepo := repository.NewReviewRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
 	medService := services.NewMedicineService(medRepo)
+	catService := services.NewCategoryService(catRepo)
 	reviewService := services.NewReviewService(reviewRepo, userRepo, medRepo, noopPurchaseValidator{}, nil)
 	userService := services.NewUserService(userRepo)
 
 	router := gin.Default()
-	transport.RegisterRoutes(router, medService, cartService, userService, reviewService)
+	transport.RegisterRoutes(router, cartService, medService, catService, userService, reviewService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)
