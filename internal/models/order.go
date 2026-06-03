@@ -34,14 +34,14 @@ type OrderResponse struct {
 	FinalPrice      float64     `json:"final_price"`
 	DeliveryAddress string      `json:"delivery_address"`
 	Comment         string      `json:"comment"`
-	PromocodeCode   string      `json:"promocode"`
+	PromocodeCode   string      `json:"promocode,omitempty"`
 	Items           []OrderItem `json:"items"`
 }
 
 type OrderCreate struct {
-	DeliveryAddress string `json:"delivery_address"`
+	DeliveryAddress string `json:"delivery_address" binding:"required"`
 	Comment         string `json:"comment"`
-	PromocodeCode   string `json:"promocode"`
+	PromocodeCode   *string `json:"promocode"`
 }
 
 type OrderStatusUpdate struct {

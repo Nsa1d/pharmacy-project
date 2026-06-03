@@ -58,10 +58,15 @@ func (s *orderService) CreateOrder(userID uint, req *models.OrderCreate) (*model
 
 	trimAddress := strings.TrimSpace(req.DeliveryAddress)
 	trimComment := strings.TrimSpace(req.Comment)
-	trimPromocode := strings.TrimSpace(req.PromocodeCode)
 
-	if trimAddress == "" || trimComment == "" || trimPromocode == "" {
+	if trimAddress == "" || trimComment == "" {
 		return nil, apperrors.ErrEmptyRequiredFields
+	}
+
+	var trimPromocode string
+	if req.PromocodeCode != nil {
+		trimPromocode = strings.TrimSpace(*req.PromocodeCode)
+
 	}
 
 	if utf8.RuneCountInString(trimAddress) < 10 || utf8.RuneCountInString(trimAddress) > 250 {
@@ -72,55 +77,59 @@ func (s *orderService) CreateOrder(userID uint, req *models.OrderCreate) (*model
 		return nil, apperrors.ErrCommentLengthInvalid
 	}
 
-	promo, err := s.promocode.GetByCode(trimPromocode)
-	if err != nil {
-		return nil, apperrors.ErrPromocodeNotFound
-	}
+	var (
+		discountTotal float64
+		promo         *models.Promocode
+	)
 
-	if promo == nil {
-		return nil, apperrors.ErrPromocodeNotFound
-	}
+	if trimPromocode != "" {
+		promo, err = s.promocode.GetByCode(trimPromocode)
+		if err != nil {
+			return nil, apperrors.ErrPromocodeNotFound
+		}
 
-	if !promo.IsActive {
-		return nil, apperrors.ErrPromocodeInactive
-	}
+		if !promo.IsActive {
+			return nil, apperrors.ErrPromocodeInactive
+		}
 
-	now := time.Now()
-	if now.After(promo.ValidTo) {
-		return nil, apperrors.ErrPromocodeExpired
-	}
+		if time.Now().After(promo.ValidTo) {
+			return nil, apperrors.ErrPromocodeExpired
+		}
 
-	if promo.MaxUses != nil && promo.UsedCount > *promo.MaxUses {
-		return nil, apperrors.ErrPromoUsageLimit
-	}
-	//ПОЛУЧИТЬ ЗАКАЗЫ И ПРОВЕРИТЬ, СКОЛЬКО РАЗ ИСП ПРОМО
-	exists, err := s.order.GetByUserID(userID)
-	if err != nil {
-		return nil, apperrors.ErrOrdersNotFound
-	}
+		if promo.MaxUses != nil && promo.UsedCount >= *promo.MaxUses {
+			return nil, apperrors.ErrPromoUsageLimit
+		}
 
-	promoUsedCount := 0
-	for _, v := range exists {
-		if v.PromocodeCode == trimPromocode {
-			promoUsedCount++
+		orders, err := s.order.GetByUserID(userID)
+		if err != nil {
+			return nil, apperrors.ErrOrdersNotFound
+		}
+
+		promoUsedCount := 0
+		for _, order := range orders {
+			if order.PromocodeCode == trimPromocode {
+				promoUsedCount++
+			}
+		}
+
+		if promo.MaxUsesPerUser != nil &&
+			promoUsedCount >= *promo.MaxUsesPerUser {
+			return nil, apperrors.ErrPromoUserLimit
+		}
+
+		switch promo.DiscountType {
+		case "fixed":
+			if cart.TotalPrice <= promo.DiscountValue {
+				return nil, apperrors.ErrDiscountTooHigh
+			}
+			discountTotal = promo.DiscountValue
+
+		case "percent":
+			discountTotal = (cart.TotalPrice * promo.DiscountValue) / 100
 		}
 	}
 
-	if promo.MaxUsesPerUser != nil && promoUsedCount >= *promo.MaxUsesPerUser {
-		return nil, apperrors.ErrPromoUserLimit
-	}
-
-	var discountTotal float64
-
-	if promo.DiscountType == "fixed" {
-		if cart.TotalPrice <= promo.DiscountValue {
-			return nil, apperrors.ErrDiscountTooHigh
-		}
-		discountTotal = promo.DiscountValue
-	} else if promo.DiscountType == "percent" {
-		discountTotal = (cart.TotalPrice * promo.DiscountValue) / 100
-	}
-
+	//--------------------
 	totalSum := cart.TotalPrice - discountTotal
 
 	orderItems := make([]models.OrderItem, 0, len(cart.Items))
@@ -165,10 +174,12 @@ func (s *orderService) CreateOrder(userID uint, req *models.OrderCreate) (*model
 	}
 
 	//МЕНЯТЬ С ПОМОЩЬЮ ВЫЗОВА РЕПОЗИТОРИЯ ПРОМО
-	promo.UsedCount++
+	if promo != nil {
+		promo.UsedCount++
 
-	if err := s.promocode.Update(promo); err != nil {
-		return nil, err
+		if err := s.promocode.Update(promo); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.carts.CleanCart(userID); err != nil {

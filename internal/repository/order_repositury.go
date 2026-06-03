@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"pharmacy-project/internal/models"
 
 	"gorm.io/gorm"
@@ -16,6 +17,8 @@ type OrderRepository interface {
 	GetByOrderID(orderID uint) ([]models.OrderItem, error)
 
 	UpdateStatus(orderID uint, status string) error
+
+	UserPurchasedMedicine(userID, medicineID uint) (bool, error)
 }
 
 type gormOrderRepository struct {
@@ -68,4 +71,26 @@ func (r *gormOrderRepository) GetByOrderID(orderID uint) ([]models.OrderItem, er
 
 func (r *gormOrderRepository) UpdateStatus(id uint, status string) error {
 	return r.db.Model(&models.Order{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (r *gormOrderRepository) UserPurchasedMedicine(userID, medicineID uint) (bool, error) {
+	var order models.Order
+
+	err := r.db.
+		Model(&models.Order{}).
+		Select("orders.id").
+		Joins("JOIN order_items oi ON oi.order_id = orders.id").
+		Where("orders.user_id = ?", userID).
+		Where("oi.medicine_id = ?", medicineID).
+		Limit(1).
+		Take(&order).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

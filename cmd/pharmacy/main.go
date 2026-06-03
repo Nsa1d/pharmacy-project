@@ -31,11 +31,13 @@ func main() {
 	paymentRepo := repository.NewPaymentRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
+
 	orderService := services.NewOrderService(orderRepo, cartRepo, medRepo, userRepo, promocodeRepo, paymentRepo)
 	paymentService := services.NewPaymentService(paymentRepo, orderRepo, cartRepo)
+	medService := services.NewMedicineService(medRepo)
 
 	router := gin.Default()
-	transport.RegisterRoutes(router, cartService, orderService, paymentService)
+	transport.RegisterRoutes(router, medService, cartService, orderService, paymentService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)

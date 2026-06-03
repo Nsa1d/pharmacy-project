@@ -11,7 +11,9 @@ type Err struct {
 }
 
 var (
-	ErrUserNotFound       = errors.New("пользователь с таким ID не найден")
+	ErrUserNotFound      = errors.New("пользователь не найден")
+	ErrUserAlreadyExists = errors.New("пользователь с таким email или телефоном уже существует")
+	ErrInvalidUserInput  = errors.New("некорректные данные пользователя")
 	ErrMedicineNotFound   = errors.New("лекарство с таким ID не найдено")
 	ErrItemNotFound       = errors.New("лекарства с таким номером нет в корзине")
 	ErrMedicineOutOfStock = errors.New("лекарства нет в наличии")
