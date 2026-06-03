@@ -120,7 +120,7 @@ func (h *ReviewHandler) handleReviewError(c *gin.Context, err error) {
 		errors.Is(err, apperrors.ErrMedicineNotFound):
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "внутренняя ошибка сервера"})
 	}
 }
 

@@ -16,11 +16,11 @@ func RegisterRoutes(
 	medHandler := NewMedicineHandler(medService)
 	cartHadler := NewCartHandler(cartService)
 	userHandler := NewUserHandler(userService)
-	reviewHndler := NewReviewHandler(reviewService)
+	reviewHandler := NewReviewHandler(reviewService)
 
 	cartHadler.RegisterRoutes(router)
 	userHandler.RegisterRoutes(router)
 	medHandler.RegisterRoutes(router)
-	reviewHndler.RegisterRoutes(router)
+	reviewHandler.RegisterRoutes(router)
 
 }
