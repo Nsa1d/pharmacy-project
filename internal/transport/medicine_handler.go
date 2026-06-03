@@ -66,7 +66,17 @@ func (h *MedicineHandler) CreateMedicine(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, medicine)
+	c.JSON(http.StatusCreated, gin.H{
+		"name":                  medicine.Name,
+		"description":           medicine.Description,
+		"price":                 medicine.Price,
+		"in_stock":              medicine.InStock,
+		"stock_quantity":        medicine.StockQuantity,
+		"category_id":           medicine.CategoryID,
+		"subcategory_id":        medicine.SubcategoryID,
+		"manufacturer":          medicine.Manufacturer,
+		"prescription_required": medicine.PrescriptionRequired,
+	})
 }
 
 func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
@@ -86,7 +96,11 @@ func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, medicine)
+	c.JSON(http.StatusOK, gin.H{
+		"price":          medicine.Price,
+		"in_stock":       medicine.InStock,
+		"stock_quantity": medicine.StockQuantity,
+	})
 }
 
 func (h *MedicineHandler) DeleteMedicine(c *gin.Context) {

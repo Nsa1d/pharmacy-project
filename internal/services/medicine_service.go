@@ -13,7 +13,7 @@ import (
 const pattern = `^[a-zA-Zа-яА-Я0-9., ]+$`
 
 type MedicineService interface {
-	GetAll() ([]models.Medicine, error)
+	GetAll() ([]models.MedicineListItem, error)
 	GetByID(id uint) (*models.Medicine, error)
 	DeleteByID(id uint) error
 	CreateMed(req models.MedUpsertRequest) (*models.Medicine, error)
@@ -28,13 +28,14 @@ func NewMedicineService(service repository.MedicineRepository) MedicineService {
 	return &medicineService{medicine: service}
 }
 
-func (s *medicineService) GetAll() ([]models.Medicine, error) {
+func (s *medicineService) GetAll() ([]models.MedicineListItem, error) {
 	med, err := s.medicine.GetAll()
 	if err != nil {
-
 		return nil, err
 	}
-	return med, nil
+
+	medList := ToMedicineListItems(med)
+	return medList, nil
 }
 
 func (s *medicineService) GetByID(id uint) (*models.Medicine, error) {
@@ -131,4 +132,34 @@ func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
 		return errors.New("цена должна быть больше нуля")
 	}
 	return nil
+}
+
+func ToMedicineListItem(m models.Medicine) models.MedicineListItem {
+	return models.MedicineListItem{
+		ID:        m.ID,
+		Name:      m.Name,
+		Price:     m.Price,
+		InStock:   m.StockQuantity > 0,
+		AvgRating: 0, // потом из отзывов
+	}
+}
+
+func ToMedicineListItems(medicines []models.Medicine) []models.MedicineListItem {
+	result := make([]models.MedicineListItem, 0, len(medicines))
+	for _, m := range medicines {
+		result = append(result, ToMedicineListItem(m))
+	}
+	return result
+}
+
+func (s *medicineService) UpdateAvgRating(medicineID uint, avg float64) (*models.Medicine, error) {
+	med, err := s.GetByID(medicineID)
+	if err != nil {
+		return nil, err
+	}
+	med.AvgRating = avg
+	if err := s.medicine.MedUpdate(medicineID, *med); err != nil {
+		return nil, err
+	}
+	return med, nil
 }
