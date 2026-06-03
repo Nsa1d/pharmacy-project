@@ -11,10 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type noopPurchaseValidator struct{}
+
+func (noopPurchaseValidator) UserPurchasedMedicine(userID, medicineID uint) (bool, error) {
+	return true, nil
+}
+
 func main() {
 	db := config.SetUpDatabaseConnection()
 
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&models.CartItem{},
 		&models.User{},
 		&models.Medicine{},
@@ -22,22 +28,31 @@ func main() {
 		&models.OrderItem{},
 		&models.Promocode{},
 		&models.Payment{},
-	)
+		&models.Category{},
+		&models.SubCategory{},
+	); err != nil {
+		log.Fatalf("не удалось выполнить миграции: %v", err)
+	}
+
 	cartRepo := repository.NewCartRepository(db)
 	medRepo := repository.NewMedicineRepository(db)
+	catRepo := repository.NewCategoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
 	promocodeRepo := repository.NewPromocodeRepository(db)
 	paymentRepo := repository.NewPaymentRepository(db)
+	reviewRepo := repository.NewReviewRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
-
+	medService := services.NewMedicineService(medRepo)
+	catService := services.NewCategoryService(catRepo)
+	userService := services.NewUserService(userRepo)
 	orderService := services.NewOrderService(orderRepo, cartRepo, medRepo, userRepo, promocodeRepo, paymentRepo)
 	paymentService := services.NewPaymentService(paymentRepo, orderRepo, cartRepo)
-	medService := services.NewMedicineService(medRepo)
+	reviewService := services.NewReviewService(reviewRepo, userRepo, medRepo, noopPurchaseValidator{}, nil)
 
 	router := gin.Default()
-	transport.RegisterRoutes(router, medService, cartService, orderService, paymentService)
+	transport.RegisterRoutes(router, medService, catService, cartService, orderService, paymentService, userService, reviewService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)

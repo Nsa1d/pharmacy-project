@@ -26,3 +26,11 @@ type MedUpsertRequest struct {
 	Manufacturer         string `json:"manufacturer" binding:"required"`
 	PrescriptionRequired bool   `json:"prescription_required"`
 }
+
+type MedicineListItem struct {
+	ID        uint    `json:"id"`
+	Name      string  `json:"name"`
+	Price     int     `json:"price"`
+	InStock   bool    `json:"in_stock"`
+	AvgRating float64 `json:"avg_rating"`
+}
