@@ -20,7 +20,17 @@ func (noopPurchaseValidator) UserPurchasedMedicine(userID, medicineID uint) (boo
 func main() {
 	db := config.SetUpDatabaseConnection()
 
-	if err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}, &models.Category{}, &models.SubCategory{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.CartItem{},
+		&models.User{},
+		&models.Medicine{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.Promocode{},
+		&models.Payment{},
+		&models.Category{},
+		&models.SubCategory{},
+	); err != nil {
 		log.Fatalf("не удалось выполнить миграции: %v", err)
 	}
 
@@ -28,16 +38,21 @@ func main() {
 	medRepo := repository.NewMedicineRepository(db)
 	catRepo := repository.NewCategoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
+	orderRepo := repository.NewOrderRepository(db)
+	promocodeRepo := repository.NewPromocodeRepository(db)
+	paymentRepo := repository.NewPaymentRepository(db)
 	reviewRepo := repository.NewReviewRepository(db)
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
 	medService := services.NewMedicineService(medRepo)
 	catService := services.NewCategoryService(catRepo)
-	reviewService := services.NewReviewService(reviewRepo, userRepo, medRepo, noopPurchaseValidator{}, nil)
 	userService := services.NewUserService(userRepo)
+	orderService := services.NewOrderService(orderRepo, cartRepo, medRepo, userRepo, promocodeRepo, paymentRepo)
+	paymentService := services.NewPaymentService(paymentRepo, orderRepo, cartRepo)
+	reviewService := services.NewReviewService(reviewRepo, userRepo, medRepo, noopPurchaseValidator{}, nil)
 
 	router := gin.Default()
-	transport.RegisterRoutes(router, medService, catService, cartService, userService, reviewService)
+	transport.RegisterRoutes(router, medService, catService, cartService, orderService, paymentService, userService, reviewService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)

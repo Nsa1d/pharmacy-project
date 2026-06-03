@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"errors"
 	"net/http"
 	"pharmacy-project/internal/apperrors"
 	"pharmacy-project/internal/models"
@@ -44,7 +43,8 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 
 	item, err := h.service.AddItem(uint(id), &req)
 	if err != nil {
-		h.handleServiceError(c, err)
+		errEx := apperrors.Get(err)
+		c.JSON(errEx.StatusCode, gin.H{"error": errEx.Msg})
 		return
 	}
 
@@ -60,19 +60,9 @@ func (h *CartHandler) GetAllItems(c *gin.Context) {
 
 	items, err := h.service.GetAllItems(uint(id))
 	if err != nil {
-		switch {
-		case errors.Is(err, apperrors.ErrUserNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": apperrors.ErrUserNotFound.Error()})
-			return
-
-		case errors.Is(err, apperrors.ErrCartEmpty):
-			c.JSON(http.StatusOK, gin.H{"message": err.Error()})
-			return
-
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		errEx := apperrors.Get(err)
+		c.JSON(errEx.StatusCode, gin.H{"error": errEx.Msg})
+		return
 	}
 
 	c.JSON(http.StatusOK, items)
@@ -99,7 +89,8 @@ func (h *CartHandler) UpdateItem(c *gin.Context) {
 	}
 
 	if err = h.service.UpdateQuantity(uint(userID), uint(itemID), &req); err != nil {
-		h.handleServiceError(c, err)
+		errEx := apperrors.Get(err)
+		c.JSON(errEx.StatusCode, gin.H{"error": errEx.Msg})
 		return
 	}
 
@@ -124,35 +115,9 @@ func (h *CartHandler) DeleteItem(c *gin.Context) {
 	}
 
 	if err = h.service.DeleteItem(uint(userID), uint(itemID)); err != nil {
-		switch {
-		case errors.Is(err, apperrors.ErrUserNotFound),
-			errors.Is(err, apperrors.ErrItemNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		errEx := apperrors.Get(err)
+		c.JSON(errEx.StatusCode, gin.H{"error": errEx.Msg})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "позиция успешно удалена"})
-}
-
-func (h *CartHandler) handleServiceError(c *gin.Context, err error) {
-	switch {
-	case errors.Is(err, apperrors.ErrUserNotFound),
-		errors.Is(err, apperrors.ErrMedicineNotFound):
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-
-	case errors.Is(err, apperrors.ErrInvalidQuantity),
-		errors.Is(err, apperrors.ErrMedicineOutOfStock),
-		errors.Is(err, apperrors.ErrInsufficientStock):
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-
-	case errors.Is(err, apperrors.ErrItemAlreadyInCart):
-		c.JSON(http.StatusOK, gin.H{"error": apperrors.ErrItemAlreadyInCart.Error()})
-
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
 }

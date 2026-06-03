@@ -7,6 +7,8 @@ import (
 )
 
 type CartService interface {
+	//CartExists(userID uint) (bool, error)
+
 	AddItem(userID uint, req *models.CartUpsert) (*models.CartUpsert, error)
 
 	GetAllItems(userID uint) (*models.Cart, error)
@@ -35,6 +37,23 @@ func NewCartService(
 }
 
 func (s *cartService) AddItem(userID uint, req *models.CartUpsert) (*models.CartUpsert, error) {
+	// ok, err := s.CartExists(userID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// if !ok {
+	// 	s.carts.CreateCart() // доделать
+	// }
+
+	user, err := s.user.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, apperrors.ErrUserNotFound
+	}
+
 	medicine, err := s.validateItem(userID, req)
 	if err != nil {
 		return nil, err
@@ -53,16 +72,17 @@ func (s *cartService) AddItem(userID uint, req *models.CartUpsert) (*models.Cart
 			Quantity:   newQuantity,
 		}
 
-		if err := s.carts.Update(userID, exists.ID, req.Quantity); err != nil {
+		if err := s.carts.Update(userID, req.MedicineID, req.Quantity); err != nil {
 			return nil, err
 		}
 
-		return updateReq, nil
+		return updateReq, nil // вернуть карт
 	}
 
 	cart := &models.CartItem{
 		UserID:       userID,
 		MedicineID:   req.MedicineID,
+		MedicineName: medicine.Name,
 		Quantity:     req.Quantity,
 		PricePerUnit: medicine.Price,
 		LineTotal:    float64(req.Quantity * medicine.Price),
@@ -72,7 +92,7 @@ func (s *cartService) AddItem(userID uint, req *models.CartUpsert) (*models.Cart
 		return nil, err
 	}
 
-	return req, nil
+	return req, nil // TODO: возвращение корзины
 }
 
 func (s *cartService) GetAllItems(userID uint) (*models.Cart, error) {
@@ -159,3 +179,16 @@ func (s *cartService) validateItem(userID uint, req *models.CartUpsert) (*models
 
 	return medicine, nil
 }
+
+// func (s *cartService) CartExists(userID uint) (bool, error) {
+// 	_, err := s.carts.GetCart(userID)
+// 	if err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			return false, nil
+// 		}
+
+// 		return false, err
+// 	}
+
+// 	return true, nil
+// }

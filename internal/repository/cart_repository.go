@@ -11,7 +11,7 @@ type CartRepository interface {
 
 	GetAll(userID uint) ([]models.CartItem, error)
 
-	Update(userID uint, itemID uint, quantity int) error
+	Update(userID uint, medicineID uint, quantity int) error
 
 	Delete(userID uint, itemID uint) error
 
@@ -21,6 +21,8 @@ type CartRepository interface {
 	GetItemByMedicine(userID uint, medicineID uint) (*models.CartItem, error)
 
 	GetByID(userID uint, itemID uint) (*models.CartItem, error)
+
+	GetCart(userID uint) (*models.Cart, error)
 }
 
 type gormCartRepository struct {
@@ -49,11 +51,12 @@ func (r *gormCartRepository) GetAll(userID uint) ([]models.CartItem, error) {
 	return cart, nil
 }
 
-func (r *gormCartRepository) Update(userID uint, itemID uint, quantity int) error {
+func (r *gormCartRepository) Update(userID uint, medicineID uint, quantity int) error {
 	var cart models.CartItem
-	if err := r.db.Where("id = ? AND user_id = ?", itemID, userID).First(&cart).Error; err != nil {
+	if err := r.db.Where("medicine_id = ? AND user_id = ?", medicineID, userID).First(&cart).Error; err != nil {
 		return err
-	}
+	} //
+
 	cart.Quantity = quantity
 	cart.LineTotal = float64(cart.Quantity * cart.PricePerUnit)
 	return r.db.Save(&cart).Error
@@ -82,4 +85,22 @@ func (r *gormCartRepository) GetByID(userID uint, itemID uint) (*models.CartItem
 		return nil, err
 	}
 	return &cart, nil
+}
+
+func (r *gormCartRepository) GetCart(userID uint) (*models.Cart, error) {
+	items, err := r.GetAll(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var total float64
+	for _, item := range items {
+		total += item.LineTotal
+	}
+
+	return &models.Cart{
+		UserID:     userID,
+		Items:      items,
+		TotalPrice: total,
+	}, nil
 }
