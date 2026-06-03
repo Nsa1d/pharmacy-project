@@ -11,13 +11,16 @@ func RegisterRoutes(
 	medService services.MedicineService,
 	cartService services.CartService,
 	userService services.UserService,
+	reviewService services.ReviewService,
 ) {
 	medHandler := NewMedicineHandler(medService)
 	cartHadler := NewCartHandler(cartService)
 	userHandler := NewUserHandler(userService)
+	reviewHandler := NewReviewHandler(reviewService)
 
 	cartHadler.RegisterRoutes(router)
 	userHandler.RegisterRoutes(router)
 	medHandler.RegisterRoutes(router)
+	reviewHandler.RegisterRoutes(router)
 
 }
