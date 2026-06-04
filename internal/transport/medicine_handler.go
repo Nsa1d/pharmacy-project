@@ -54,7 +54,7 @@ func (h *MedicineHandler) GetByID(c *gin.Context) {
 }
 
 func (h *MedicineHandler) CreateMedicine(c *gin.Context) {
-	var req models.MedUpsertRequest
+	var req models.MedCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -85,7 +85,7 @@ func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var req models.MedUpsertRequest
+	var req models.MedUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
