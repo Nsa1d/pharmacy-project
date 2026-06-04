@@ -1,0 +1,13 @@
+.gitignore
+cmd/pharmacy/main.go
+internal/apperrors/errs.go
+internal/models/medicine.go
+internal/models/promocode.go
+internal/repository/medicine_repository.go
+internal/repository/promocode_repository.go
+internal/services/medicine_service.go
+internal/services/order_service.go
+internal/services/promocode_service.go
+internal/transport/medicine_handler.go
+internal/transport/promocode_handler.go
+internal/transport/routes.go
