@@ -27,7 +27,6 @@ func main() {
 		&models.Medicine{},
 		&models.Order{},
 		&models.OrderItem{},
-		&models.Promocode{},
 		&models.Payment{},
 		&models.Category{},
 		&models.SubCategory{},

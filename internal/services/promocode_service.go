@@ -7,7 +7,7 @@ import (
 	"regexp"
 )
 
-const patternPromo = `^[A-ZА-Я0-9]+$`
+const patternCode = `^[A-ZА-Я0-9]`
 
 type PromocodeService interface {
 	Create(req models.PromocodeCreate) (*models.Promocode, error)
@@ -28,7 +28,7 @@ func NewPromocodeService(promocode repository.PromocodeRepository) PromocodeServ
 }
 
 func (s *promocodeService) Create(req models.PromocodeCreate) (*models.Promocode, error) {
-	patternValid := regexp.MustCompile(patternPromo)
+	patternValid := regexp.MustCompile(patternCode)
 
 	if !patternValid.MatchString(req.Code) {
 		return nil, apperrors.ErrSpecialCharacters
@@ -74,7 +74,7 @@ func (s *promocodeService) GetByCode(code string) (*models.Promocode, error) {
 	if err != nil {
 		return nil, err
 	}
-	if &code == nil {
+	if promo == nil {
 		return nil, apperrors.ErrPromocodeNotFound
 	}
 
@@ -86,6 +86,18 @@ func (s *promocodeService) Update(code string, req models.PromocodeUpdate) (*mod
 	if err != nil {
 		return nil, err
 	}
+	if promo == nil {
+		return nil, apperrors.ErrPromocodeNotFound
+	}
+	patternValid := regexp.MustCompile(pattern)
+
+	if req.Code != nil && !patternValid.MatchString(*req.Code) {
+		return nil, apperrors.ErrSpecialCharacters
+	}
+
+	if req.Description != nil && !patternValid.MatchString(*req.Description) {
+		return nil, apperrors.ErrSpecialCharacters
+	}
 
 	if req.Code != nil {
 		promo.Code = *req.Code
@@ -96,8 +108,11 @@ func (s *promocodeService) Update(code string, req models.PromocodeUpdate) (*mod
 	if req.DiscountType != nil {
 		promo.DiscountType = *req.DiscountType
 	}
-	if req.DiscountValue != nil {
-		promo.DiscountValue = *req.DiscountValue
+	if req.DiscountType != nil {
+		if *req.DiscountType != models.TypePercent && *req.DiscountType != models.TypeFixed {
+			return nil, apperrors.ErrPromocodeDiscountType
+		}
+		promo.DiscountType = *req.DiscountType
 	}
 	if req.ValidFrom != nil {
 		promo.ValidFrom = *req.ValidFrom
@@ -115,14 +130,9 @@ func (s *promocodeService) Update(code string, req models.PromocodeUpdate) (*mod
 		promo.MaxUsesPerUser = *req.MaxUsesPerUser
 	}
 
-	patternValid := regexp.MustCompile(patternPromo)
-
-	if !patternValid.MatchString(*req.Code) {
-		return nil, apperrors.ErrSpecialCharacters
-	}
-
-	if !patternValid.MatchString(*req.Description) {
-		return nil, apperrors.ErrSpecialCharacters
+	err = s.promocode.Update(code, promo)
+	if err != nil {
+		return nil, err
 	}
 
 	return promo, nil

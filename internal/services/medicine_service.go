@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const pattern = `^[a-zA-Zа-яА-Я0-9., ]+$`
+const pattern = `^[a-zA-Zа-яА-Я0-9.,%]+$`
 
 type MedicineService interface {
 	GetAll() ([]models.MedicineListItem, error)
@@ -86,27 +86,24 @@ func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) (*model
 		return nil, err
 	}
 
-	if req.Name != nil {
-		medicine.Name = *req.Name
+	patternValid := regexp.MustCompile(pattern)
+
+	if req.Name != nil && !patternValid.MatchString(*req.Name) {
+		return nil, apperrors.ErrSpecialCharacters
 	}
-	if req.Description != nil {
-		medicine.Description = *req.Description
+
+	if req.Description != nil && !patternValid.MatchString(*req.Description) {
+		return nil, apperrors.ErrSpecialCharacters
 	}
+	medicine.Name = *req.Name
+
+	medicine.Description = *req.Description
+
 	if req.StockQuantity != nil {
 		medicine.StockQuantity = *req.StockQuantity
 	}
 	if req.Price != nil {
 		medicine.Price = *req.Price
-	}
-
-	patternValid := regexp.MustCompile(pattern)
-
-	if !patternValid.MatchString(*req.Name) {
-		return nil, apperrors.ErrSpecialCharacters
-	}
-
-	if !patternValid.MatchString(*req.Description) {
-		return nil, apperrors.ErrSpecialCharacters
 	}
 
 	err = s.medicine.MedUpdate(id, medicine)
