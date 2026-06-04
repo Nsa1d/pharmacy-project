@@ -28,7 +28,6 @@ var (
 	ErrCommentLengthInvalid    = errors.New("комментарий должен содержать от 5 до 250 символов")
 	ErrPromocodeNotFound       = errors.New("такой промокод не существует")
 	ErrPromocodeInactive       = errors.New("промокод неактивен")
-	ErrPromocodeDiscountType   = errors.New("тип скидки должен быть fixed или percent")
 	ErrPromocodeExpired        = errors.New("срок действия промокода истек")
 	ErrPromoUsageLimit         = errors.New("превышен лимит использования промокода")
 	ErrPromoUserLimit          = errors.New("превышен лимит на пользователя для этого промокода")
@@ -46,8 +45,6 @@ var (
 	ErrReviewNotAllowed   = errors.New("оставить отзыв можно только на купленное лекарство")
 	ErrInvalidReviewInput = errors.New("некорректные данные отзыва")
 	ErrReviewNotFound     = errors.New("отзыв не найден")
-
-	ErrSpecialCharacters = errors.New("название не должно содержать спец символов")
 )
 
 var errsMap = map[error]Err{

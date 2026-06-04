@@ -22,7 +22,6 @@ func main() {
 
 	if err := db.AutoMigrate(
 		&models.CartItem{},
-		&models.Promocode{},
 		&models.User{},
 		&models.Medicine{},
 		&models.Order{},
@@ -37,7 +36,7 @@ func main() {
 
 	cartRepo := repository.NewCartRepository(db)
 	medRepo := repository.NewMedicineRepository(db)
-	categoryRepo := repository.NewCategoryRepository(db)
+	catRepo := repository.NewCategoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
 	promocodeRepo := repository.NewPromocodeRepository(db)
@@ -46,15 +45,14 @@ func main() {
 
 	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
 	medService := services.NewMedicineService(medRepo)
-	categoryService := services.NewCategoryService(categoryRepo)
+	catService := services.NewCategoryService(catRepo)
 	userService := services.NewUserService(userRepo)
 	orderService := services.NewOrderService(orderRepo, cartRepo, medRepo, userRepo, promocodeRepo, paymentRepo)
-	promocodeService := services.NewPromocodeService(promocodeRepo)
 	paymentService := services.NewPaymentService(paymentRepo, orderRepo, cartRepo)
 	reviewService := services.NewReviewService(reviewRepo, userRepo, medRepo, noopPurchaseValidator{}, nil)
 
 	router := gin.Default()
-	transport.RegisterRoutes(router, medService, categoryService, cartService, promocodeService, orderService, paymentService, userService, reviewService)
+	transport.RegisterRoutes(router, medService, catService, cartService, orderService, paymentService, userService, reviewService)
 
 	if err := router.Run(); err != nil {
 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)

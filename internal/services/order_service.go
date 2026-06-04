@@ -96,7 +96,7 @@ func (s *orderService) CreateOrder(userID uint, req *models.OrderCreate) (*model
 			return nil, apperrors.ErrPromocodeExpired
 		}
 
-		if &promo.MaxUses != nil && promo.UsedCount >= promo.MaxUses {
+		if promo.MaxUses != nil && promo.UsedCount >= *promo.MaxUses {
 			return nil, apperrors.ErrPromoUsageLimit
 		}
 
@@ -112,8 +112,8 @@ func (s *orderService) CreateOrder(userID uint, req *models.OrderCreate) (*model
 			}
 		}
 
-		if &promo.MaxUsesPerUser != nil &&
-			promoUsedCount >= promo.MaxUsesPerUser {
+		if promo.MaxUsesPerUser != nil &&
+			promoUsedCount >= *promo.MaxUsesPerUser {
 			return nil, apperrors.ErrPromoUserLimit
 		}
 
@@ -177,7 +177,7 @@ func (s *orderService) CreateOrder(userID uint, req *models.OrderCreate) (*model
 	if promo != nil {
 		promo.UsedCount++
 
-		if err := s.promocode.Update(promo.Code, promo); err != nil {
+		if err := s.promocode.Update(promo); err != nil {
 			return nil, err
 		}
 	}

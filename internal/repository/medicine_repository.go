@@ -11,8 +11,8 @@ type MedicineRepository interface {
 	GetAll() ([]models.Medicine, error)
 	GetByID(id uint) (*models.Medicine, error)
 	DeleteByID(id uint) error
-	CreateMed(req *models.Medicine) error
-	MedUpdate(id uint, req *models.Medicine) error
+	CreateMed(req models.Medicine) error
+	MedUpdate(id uint, req models.Medicine) error
 }
 
 type gormMedicineRepository struct {
@@ -46,12 +46,13 @@ func (r *gormMedicineRepository) DeleteByID(id uint) error {
 	return r.db.Delete(&models.Medicine{}, id).Error
 }
 
-func (r *gormMedicineRepository) CreateMed(req *models.Medicine) error {
-	return r.db.Create(req).Error
+func (r *gormMedicineRepository) CreateMed(req models.Medicine) error {
+	return r.db.Create(&req).Error
 }
 
-func (r *gormMedicineRepository) MedUpdate(id uint, req *models.Medicine) error {
+func (r *gormMedicineRepository) MedUpdate(id uint, req models.Medicine) error {
 	return r.db.Model(&models.Medicine{}).
 		Where("id = ?", id).
-		Updates(req).Error
+		Select("*").
+		Updates(&req).Error
 }
