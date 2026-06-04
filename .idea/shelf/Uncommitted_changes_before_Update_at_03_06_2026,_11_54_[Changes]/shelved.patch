@@ -1,0 +1,248 @@
+Index: internal/transport/medicine_handler.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package transport\n\nimport (\n\t\"net/http\"\n\t\"pharmacy-project/internal/models\"\n\t\"pharmacy-project/internal/services\"\n\t\"strconv\"\n\n\t\"github.com/gin-gonic/gin\"\n)\n\ntype MedicineHandler struct {\n\tservice services.MedicineService\n}\n\nfunc NewMedicineHandler(service services.MedicineService) *MedicineHandler {\n\treturn &MedicineHandler{service: service}\n}\nfunc (h *MedicineHandler) RegisterRoutes(r *gin.Engine) {\n\tmedicine := r.Group(\"/medicine\")\n\t{\n\t\tmedicine.GET(\"\", h.GetAll)\n\t\tmedicine.GET(\"/:id\", h.GetByID)\n\t\tmedicine.POST(\"\", h.CreateMedicine)\n\t\tmedicine.PATCH(\"/:id\", h.UpdateMedicine)\n\t\tmedicine.DELETE(\"/:id\", h.DeleteMedicine)\n\t}\n}\n\nfunc (h *MedicineHandler) GetAll(c *gin.Context) {\n\tmedicine, err := h.service.GetAll()\n\tif err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, medicine)\n}\n\nfunc (h *MedicineHandler) GetByID(c *gin.Context) {\n\tid, err := strconv.Atoi(c.Param(\"id\"))\n\tif err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tmedicine, err := h.service.GetByID(uint(id))\n\tif err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, medicine)\n}\n\nfunc (h *MedicineHandler) CreateMedicine(c *gin.Context) {\n\tvar req models.MedUpsertRequest\n\tif err := c.ShouldBindJSON(&req); err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tmedicine, err := h.service.CreateMed(req)\n\tif err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusCreated, medicine)\n}\n\nfunc (h *MedicineHandler) UpdateMedicine(c *gin.Context) {\n\tid, err := strconv.Atoi(c.Param(\"id\"))\n\tif err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\tvar req models.MedUpsertRequest\n\tif err := c.ShouldBindJSON(&req); err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\tmedicine, err := h.service.PatchMed(uint(id), req)\n\tif err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, medicine)\n}\n\nfunc (h *MedicineHandler) DeleteMedicine(c *gin.Context) {\n\tid, err := strconv.Atoi(c.Param(\"id\"))\n\tif err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\terr = h.service.DeleteByID(uint(id))\n\tif err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, gin.H{\"message\": \"лекарство удалено из каталога\"})\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/internal/transport/medicine_handler.go b/internal/transport/medicine_handler.go
+--- a/internal/transport/medicine_handler.go	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ b/internal/transport/medicine_handler.go	(date 1780476771865)
+@@ -66,7 +66,17 @@
+ 		return
+ 	}
+ 
+-	c.JSON(http.StatusCreated, medicine)
++	c.JSON(http.StatusCreated, gin.H{
++		"name":           medicine.Name,
++		"description":    medicine.Description,
++		"price":          medicine.Price,
++		"in_stock":       medicine.InStock,
++		"stock_quantity": medicine.StockQuantity,
++		"category_id":    medicine.CategoryID,
++		"subcategory_id": medicine.SubcategoryID,
++		"manufacturer":   medicine.Manufacturer,
++		"prescription":   medicine.Description,
++	})
+ }
+ 
+ func (h *MedicineHandler) UpdateMedicine(c *gin.Context) {
+@@ -86,7 +96,11 @@
+ 		return
+ 	}
+ 
+-	c.JSON(http.StatusOK, medicine)
++	c.JSON(http.StatusOK, gin.H{
++		"price":          medicine.Price,
++		"in_stock":       medicine.InStock,
++		"stock_quantity": medicine.StockQuantity,
++	})
+ }
+ 
+ func (h *MedicineHandler) DeleteMedicine(c *gin.Context) {
+Index: internal/services/medicine_service.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package services\n\nimport (\n\t\"errors\"\n\t\"pharmacy-project/internal/models\"\n\t\"pharmacy-project/internal/repository\"\n\t\"regexp\"\n\t\"strings\"\n\n\t\"gorm.io/gorm\"\n)\n\nconst pattern = `^[a-zA-Zа-яА-Я0-9., ]+$`\n\ntype MedicineService interface {\n\tGetAll() ([]models.Medicine, error)\n\tGetByID(id uint) (*models.Medicine, error)\n\tDeleteByID(id uint) error\n\tCreateMed(req models.MedUpsertRequest) (*models.Medicine, error)\n\tPatchMed(id uint, req models.MedUpsertRequest) (*models.Medicine, error)\n}\n\ntype medicineService struct {\n\tmedicine repository.MedicineRepository\n}\n\nfunc NewMedicineService(service repository.MedicineRepository) MedicineService {\n\treturn &medicineService{medicine: service}\n}\n\nfunc (s *medicineService) GetAll() ([]models.Medicine, error) {\n\tmed, err := s.medicine.GetAll()\n\tif err != nil {\n\n\t\treturn nil, err\n\t}\n\treturn med, nil\n}\n\nfunc (s *medicineService) GetByID(id uint) (*models.Medicine, error) {\n\tmed, err := s.medicine.GetByID(id)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\treturn med, nil\n}\n\nfunc (s *medicineService) DeleteByID(id uint) error {\n\tif _, err := s.medicine.GetByID(id); err != nil {\n\t\treturn gorm.ErrRecordNotFound\n\t}\n\tif err := s.medicine.DeleteByID(id); err != nil {\n\t\treturn err\n\t}\n\treturn nil\n}\n\nfunc (s *medicineService) CreateMed(req models.MedUpsertRequest) (*models.Medicine, error) {\n\tif err := s.validateUpsert(req); err != nil {\n\t\treturn nil, err\n\t}\n\n\tinStock := false\n\tif req.StockQuantity > 0 {\n\t\tinStock = true\n\t}\n\tmedicine := &models.Medicine{\n\t\tName:                 req.Name,\n\t\tDescription:          req.Description,\n\t\tPrice:                req.Price,\n\t\tInStock:              inStock,\n\t\tStockQuantity:        req.StockQuantity,\n\t\tCategoryID:           req.CategoryID,\n\t\tSubcategoryID:        req.SubcategoryID,\n\t\tManufacturer:         req.Manufacturer,\n\t\tPrescriptionRequired: req.PrescriptionRequired,\n\t}\n\n\tif err := s.medicine.CreateMed(*medicine); err != nil {\n\t\treturn nil, err\n\t}\n\treturn medicine, nil\n}\n\nfunc (s *medicineService) PatchMed(id uint, req models.MedUpsertRequest) (*models.Medicine, error) {\n\tif err := s.validateUpsert(req); err != nil {\n\t\treturn nil, err\n\t}\n\n\tif _, err := s.medicine.GetByID(id); err != nil {\n\t\treturn nil, gorm.ErrRecordNotFound\n\t}\n\n\tinStock := false\n\tif req.StockQuantity > 0 {\n\t\tinStock = true\n\t}\n\tmedicine := &models.Medicine{\n\t\tName:                 req.Name,\n\t\tDescription:          req.Description,\n\t\tPrice:                req.Price,\n\t\tInStock:              inStock,\n\t\tStockQuantity:        req.StockQuantity,\n\t\tCategoryID:           req.CategoryID,\n\t\tSubcategoryID:        req.SubcategoryID,\n\t\tManufacturer:         req.Manufacturer,\n\t\tPrescriptionRequired: req.PrescriptionRequired,\n\t}\n\tif err := s.medicine.MedUpdate(id, *medicine); err != nil {\n\t\treturn nil, err\n\t}\n\treturn medicine, nil\n}\n\nfunc (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {\n\tmanufacturer := strings.TrimSpace(req.Manufacturer)\n\n\tpatternValid := regexp.MustCompile(pattern)\n\n\tif !patternValid.MatchString(req.Name) {\n\t\treturn errors.New(\"название не должно содержать спец символов\")\n\t}\n\tif !patternValid.MatchString(manufacturer) {\n\t\treturn errors.New(\"название производства не должно содержать спец символов\")\n\t}\n\tif !patternValid.MatchString(req.Description) {\n\t\treturn errors.New(\"описание не должно содержать спец символов\")\n\t}\n\n\tif req.Price <= 0 {\n\t\treturn errors.New(\"цена должна быть больше нуля\")\n\t}\n\treturn nil\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/internal/services/medicine_service.go b/internal/services/medicine_service.go
+--- a/internal/services/medicine_service.go	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ b/internal/services/medicine_service.go	(date 1780476365658)
+@@ -13,7 +13,7 @@
+ const pattern = `^[a-zA-Zа-яА-Я0-9., ]+$`
+ 
+ type MedicineService interface {
+-	GetAll() ([]models.Medicine, error)
++	GetAll() ([]models.MedicineListItem, error)
+ 	GetByID(id uint) (*models.Medicine, error)
+ 	DeleteByID(id uint) error
+ 	CreateMed(req models.MedUpsertRequest) (*models.Medicine, error)
+@@ -28,13 +28,16 @@
+ 	return &medicineService{medicine: service}
+ }
+ 
+-func (s *medicineService) GetAll() ([]models.Medicine, error) {
++func (s *medicineService) GetAll() ([]models.MedicineListItem, error) {
+ 	med, err := s.medicine.GetAll()
+ 	if err != nil {
+ 
+ 		return nil, err
+ 	}
+-	return med, nil
++
++	medicine := ToMedicineListItems(med)
++
++	return medicine, nil
+ }
+ 
+ func (s *medicineService) GetByID(id uint) (*models.Medicine, error) {
+@@ -132,3 +135,21 @@
+ 	}
+ 	return nil
+ }
++
++func ToMedicineListItem(m models.Medicine) models.MedicineListItem {
++	return models.MedicineListItem{
++		ID:        m.ID,
++		Name:      m.Name,
++		Price:     m.Price,
++		InStock:   m.StockQuantity > 0,
++		AvgRating: 0, // потом из отзывов
++	}
++}
++
++func ToMedicineListItems(medicines []models.Medicine) []models.MedicineListItem {
++	result := make([]models.MedicineListItem, 0, len(medicines))
++	for _, m := range medicines {
++		result = append(result, ToMedicineListItem(m))
++	}
++	return result
++}
+Index: internal/models/medicine.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package models\n\nimport \"gorm.io/gorm\"\n\ntype Medicine struct {\n\tgorm.Model\n\tName                 string  `json:\"name\"`\n\tDescription          string  `json:\"description\"`\n\tPrice                int     `json:\"price\"`\n\tInStock              bool    `json:\"in_stock\"`\n\tStockQuantity        int     `json:\"stock_quantity\"`\n\tCategoryID           uint    `json:\"category_id\"`\n\tSubcategoryID        uint    `json:\"subcategory_id\"`\n\tManufacturer         string  `gorm:\"unique\" json:\"manufacturer\"`\n\tPrescriptionRequired bool    `json:\"prescription_required\"`\n\tAvgRating            float64 `json:\"avg_rating\"`\n}\n\ntype MedUpsertRequest struct {\n\tName                 string `json:\"name\" binding:\"required\"`\n\tDescription          string `json:\"description\" binding:\"required\"`\n\tPrice                int    `json:\"price\" binding:\"required,gt=0\"`\n\tStockQuantity        int    `json:\"stock_quantity\"`\n\tCategoryID           uint   `json:\"category_id\" binding:\"required\"`\n\tSubcategoryID        uint   `json:\"subcategory_id\" binding:\"required\"`\n\tManufacturer         string `json:\"manufacturer\" binding:\"required\"`\n\tPrescriptionRequired bool   `json:\"prescription_required\"`\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/internal/models/medicine.go b/internal/models/medicine.go
+--- a/internal/models/medicine.go	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ b/internal/models/medicine.go	(date 1780475619997)
+@@ -26,3 +26,12 @@
+ 	Manufacturer         string `json:"manufacturer" binding:"required"`
+ 	PrescriptionRequired bool   `json:"prescription_required"`
+ }
++
++type MedicineListItem struct {
++	ID          uint    `json:"id"`
++	Name        string  `json:"name"`
++	Description string  `json:"description"`
++	Price       int     `json:"price"`
++	InStock     bool    `json:"in_stock"`
++	AvgRating   float64 `json:"avg_rating"`
++}
+Index: internal/repository/medicine_repository.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package repository\n\nimport (\n\t\"errors\"\n\t\"pharmacy-project/internal/models\"\n\n\t\"gorm.io/gorm\"\n)\n\ntype MedicineRepository interface {\n\tGetAll() ([]models.Medicine, error)\n\tGetByID(id uint) (*models.Medicine, error)\n\tDeleteByID(id uint) error\n\tCreateMed(req models.Medicine) error\n\tMedUpdate(id uint, req models.Medicine) error\n}\n\ntype gormMedicineRepository struct {\n\tdb *gorm.DB\n}\n\nfunc NewMedicineRepository(db *gorm.DB) MedicineRepository {\n\treturn &gormMedicineRepository{db: db}\n}\n\nfunc (r *gormMedicineRepository) GetAll() ([]models.Medicine, error) {\n\tvar medicine []models.Medicine\n\tif err := r.db.Find(&medicine).Error; err != nil {\n\t\treturn nil, err\n\t}\n\treturn medicine, nil\n}\n\nfunc (r *gormMedicineRepository) GetByID(id uint) (*models.Medicine, error) {\n\tvar med models.Medicine\n\tif err := r.db.First(&med, id).Error; err != nil {\n\t\tif errors.Is(err, gorm.ErrRecordNotFound) {\n\t\t\treturn nil, gorm.ErrRecordNotFound\n\t\t}\n\t\treturn nil, err\n\t}\n\treturn &med, nil\n}\n\nfunc (r *gormMedicineRepository) DeleteByID(id uint) error {\n\treturn r.db.Delete(&models.Medicine{}, id).Error\n}\n\nfunc (r *gormMedicineRepository) CreateMed(req models.Medicine) error {\n\treturn r.db.Create(&req).Error\n}\n\nfunc (r *gormMedicineRepository) MedUpdate(id uint, req models.Medicine) error {\n\treturn r.db.Model(&models.Medicine{}).Where(\"id = ?\", id).Updates(&req).Error\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/internal/repository/medicine_repository.go b/internal/repository/medicine_repository.go
+--- a/internal/repository/medicine_repository.go	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ b/internal/repository/medicine_repository.go	(date 1780476771917)
+@@ -53,3 +53,7 @@
+ func (r *gormMedicineRepository) MedUpdate(id uint, req models.Medicine) error {
+ 	return r.db.Model(&models.Medicine{}).Where("id = ?", id).Updates(&req).Error
+ }
++
++func AvgRating(medicine models.Medicine) float64 {
++	
++}
+Index: .env.example
+===================================================================
+diff --git a/.env.example b/.env.example
+deleted file mode 100644
+--- a/.env.example	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ /dev/null	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
+@@ -1,8 +0,0 @@
+-DB_HOST=localhost
+-DB_PORT=5432
+-DB_USER=postgres
+-DB_PASSWORD=your_password
+-DB_NAME=your_database
+-DB_SSLMODE=disable
+-
+-PORT=8888
+\ No newline at end of file
+Index: internal/transport/routes.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package transport\n\nimport (\n\t\"pharmacy-project/internal/services\"\n\n\t\"github.com/gin-gonic/gin\"\n)\n\nfunc RegisterRoutes(\n\trouter *gin.Engine,\n\tmedService services.MedicineService,\n\tcategoriesService services.CategoryService,\n\tcartService services.CartService,\n\tpromoService services.PromocodeService,\n) {\n\tmedHandler := NewMedicineHandler(medService)\n\tcategoriesHandler := NewCategoryHandler(categoriesService)\n\tcartHandler := NewCartHandler(cartService)\n\tpromoHandler := NewPromocodeHandler(promoService)\n\n\tmedHandler.RegisterRoutes(router)\n\tcategoriesHandler.RegisterRoutes(router)\n\tcartHandler.RegisterRoutes(router)\n\tpromoHandler.RegisterRoutes(router)\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/internal/transport/routes.go b/internal/transport/routes.go
+--- a/internal/transport/routes.go	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ b/internal/transport/routes.go	(date 1780405175964)
+@@ -10,16 +10,16 @@
+ 	router *gin.Engine,
+ 	medService services.MedicineService,
+ 	categoriesService services.CategoryService,
+-	cartService services.CartService,
++	//cartService services.CartService,
+ 	promoService services.PromocodeService,
+ ) {
+ 	medHandler := NewMedicineHandler(medService)
+ 	categoriesHandler := NewCategoryHandler(categoriesService)
+-	cartHandler := NewCartHandler(cartService)
++	//cartHandler := NewCartHandler(cartService)
+ 	promoHandler := NewPromocodeHandler(promoService)
+ 
+ 	medHandler.RegisterRoutes(router)
+ 	categoriesHandler.RegisterRoutes(router)
+-	cartHandler.RegisterRoutes(router)
++	//cartHandler.RegisterRoutes(router)
+ 	promoHandler.RegisterRoutes(router)
+ }
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1779978841460)
++++ b/.idea/.gitignore	(date 1779978841460)
+@@ -0,0 +1,10 @@
++# Default ignored files
++/shelf/
++/workspace.xml
++# Editor-based HTTP Client requests
++/httpRequests/
++# Ignored default folder with query files
++/queries/
++# Datasource local storage ignored files
++/dataSources/
++/dataSources.local.xml
+Index: cmd/pharmacy/main.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package main\n\nimport (\n\t\"log\"\n\t\"pharmacy-project/internal/config\"\n\t\"pharmacy-project/internal/models\"\n\t\"pharmacy-project/internal/repository\"\n\t\"pharmacy-project/internal/services\"\n\t\"pharmacy-project/internal/transport\"\n\n\t\"github.com/gin-gonic/gin\"\n)\n\nfunc main() {\n\tdb := config.SetUpDatabaseConnection()\n\n\tif err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}, &models.Category{}, &models.SubCategory{}, &models.Promocode{}); err != nil {\n\t\tlog.Fatalf(\"не удалось выполнить миграции: %v\", err)\n\t}\n\n\tmedRepo := repository.NewMedicineRepository(db)\n\tcategoryRepo := repository.NewCategoryRepository(db)\n\tcartRepo := repository.NewCartRepository(db)\n\tpromoRepo := repository.NewPromocodeRepository(db)\n\tuserRepo := repository.NewUserRepository(db)\n\n\tmedService := services.NewMedicineService(medRepo)\n\tcategoryService := services.NewCategoryService(categoryRepo)\n\tcartService := services.NewCartService(cartRepo, medRepo, userRepo)\n\tpromoService := services.NewPromocodeService(promoRepo)\n\n\trouter := gin.Default()\n\ttransport.RegisterRoutes(router, medService, categoryService, cartService, promoService)\n\n\tif err := router.Run(); err != nil {\n\t\tlog.Fatalf(\"не удалось запустить HTTP-сервер: %v\", err)\n\t}\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cmd/pharmacy/main.go b/cmd/pharmacy/main.go
+--- a/cmd/pharmacy/main.go	(revision 1307bf60cd945e5d3346272edb485105d5a9daa4)
++++ b/cmd/pharmacy/main.go	(date 1780405175880)
+@@ -14,23 +14,23 @@
+ func main() {
+ 	db := config.SetUpDatabaseConnection()
+ 
+-	if err := db.AutoMigrate(&models.Cart{}, &models.User{}, &models.Medicine{}, &models.Category{}, &models.SubCategory{}, &models.Promocode{}); err != nil {
++	if err := db.AutoMigrate(&models.Medicine{}, &models.Category{}, &models.SubCategory{}, &models.Promocode{}); err != nil {
+ 		log.Fatalf("не удалось выполнить миграции: %v", err)
+ 	}
+ 
+ 	medRepo := repository.NewMedicineRepository(db)
+ 	categoryRepo := repository.NewCategoryRepository(db)
+-	cartRepo := repository.NewCartRepository(db)
++	//cartRepo := repository.NewCartRepository(db)
+ 	promoRepo := repository.NewPromocodeRepository(db)
+-	userRepo := repository.NewUserRepository(db)
++	//userRepo := repository.NewUserRepository(db)
+ 
+ 	medService := services.NewMedicineService(medRepo)
+ 	categoryService := services.NewCategoryService(categoryRepo)
+-	cartService := services.NewCartService(cartRepo, medRepo, userRepo)
++	//cartService := services.NewCartService(cartRepo, medRepo, userRepo)
+ 	promoService := services.NewPromocodeService(promoRepo)
+ 
+ 	router := gin.Default()
+-	transport.RegisterRoutes(router, medService, categoryService, cartService, promoService)
++	transport.RegisterRoutes(router, medService, categoryService, promoService)
+ 
+ 	if err := router.Run(); err != nil {
+ 		log.Fatalf("не удалось запустить HTTP-сервер: %v", err)

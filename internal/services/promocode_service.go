@@ -58,7 +58,7 @@ func (s *promocodeService) Create(req models.PromocodeCreate) (*models.Promocode
 		return nil, err
 	}
 
-	return promo, nil
+	return promo, nilм
 }
 
 func (s *promocodeService) GetAll() ([]models.Promocode, error) {
