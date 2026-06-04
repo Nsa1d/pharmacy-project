@@ -1,7 +1,7 @@
 package services
 
 import (
-	"errors"
+	"pharmacy-project/internal/apperrors"
 	"pharmacy-project/internal/models"
 	"pharmacy-project/internal/repository"
 	"regexp"
@@ -16,8 +16,8 @@ type MedicineService interface {
 	GetAll() ([]models.MedicineListItem, error)
 	GetByID(id uint) (*models.Medicine, error)
 	DeleteByID(id uint) error
-	CreateMed(req models.MedUpsertRequest) (*models.Medicine, error)
-	PatchMed(id uint, req models.MedUpsertRequest) (*models.Medicine, error)
+	CreateMed(req models.MedCreateRequest) (*models.Medicine, error)
+	PatchMed(id uint, req models.MedUpdateRequest) (*models.Medicine, error)
 }
 
 type medicineService struct {
@@ -56,15 +56,12 @@ func (s *medicineService) DeleteByID(id uint) error {
 	return nil
 }
 
-func (s *medicineService) CreateMed(req models.MedUpsertRequest) (*models.Medicine, error) {
+func (s *medicineService) CreateMed(req models.MedCreateRequest) (*models.Medicine, error) {
 	if err := s.validateUpsert(req); err != nil {
 		return nil, err
 	}
 
-	inStock := false
-	if req.StockQuantity > 0 {
-		inStock = true
-	}
+	inStock := req.StockQuantity > 0
 	medicine := &models.Medicine{
 		Name:                 req.Name,
 		Description:          req.Description,
@@ -77,60 +74,64 @@ func (s *medicineService) CreateMed(req models.MedUpsertRequest) (*models.Medici
 		PrescriptionRequired: req.PrescriptionRequired,
 	}
 
-	if err := s.medicine.CreateMed(*medicine); err != nil {
+	if err := s.medicine.CreateMed(medicine); err != nil {
 		return nil, err
 	}
 	return medicine, nil
 }
 
-func (s *medicineService) PatchMed(id uint, req models.MedUpsertRequest) (*models.Medicine, error) {
-	if err := s.validateUpsert(req); err != nil {
+func (s *medicineService) PatchMed(id uint, req models.MedUpdateRequest) (*models.Medicine, error) {
+	medicine, err := s.medicine.GetByID(id)
+	if err != nil {
 		return nil, err
 	}
 
-	if _, err := s.medicine.GetByID(id); err != nil {
-		return nil, gorm.ErrRecordNotFound
+	if req.Name != nil {
+		medicine.Name = *req.Name
+	}
+	if req.Description != nil {
+		medicine.Description = *req.Description
+	}
+	if req.StockQuantity != nil {
+		medicine.StockQuantity = *req.StockQuantity
+	}
+	if req.Price != nil {
+		medicine.Price = *req.Price
 	}
 
-	inStock := false
-	if req.StockQuantity > 0 {
-		inStock = true
+	patternValid := regexp.MustCompile(pattern)
+
+	if !patternValid.MatchString(*req.Name) {
+		return nil, apperrors.ErrSpecialCharacters
 	}
-	medicine := &models.Medicine{
-		Name:                 req.Name,
-		Description:          req.Description,
-		Price:                req.Price,
-		InStock:              inStock,
-		StockQuantity:        req.StockQuantity,
-		CategoryID:           req.CategoryID,
-		SubcategoryID:        req.SubcategoryID,
-		Manufacturer:         req.Manufacturer,
-		PrescriptionRequired: req.PrescriptionRequired,
+
+	if !patternValid.MatchString(*req.Description) {
+		return nil, apperrors.ErrSpecialCharacters
 	}
-	if err := s.medicine.MedUpdate(id, *medicine); err != nil {
+
+	err = s.medicine.MedUpdate(id, medicine)
+	if err != nil {
 		return nil, err
 	}
+
 	return medicine, nil
 }
 
-func (s *medicineService) validateUpsert(req models.MedUpsertRequest) error {
+func (s *medicineService) validateUpsert(req models.MedCreateRequest) error {
 	manufacturer := strings.TrimSpace(req.Manufacturer)
 
 	patternValid := regexp.MustCompile(pattern)
 
 	if !patternValid.MatchString(req.Name) {
-		return errors.New("название не должно содержать спец символов")
+		return apperrors.ErrSpecialCharacters
 	}
 	if !patternValid.MatchString(manufacturer) {
-		return errors.New("название производства не должно содержать спец символов")
+		return apperrors.ErrSpecialCharacters
 	}
 	if !patternValid.MatchString(req.Description) {
-		return errors.New("описание не должно содержать спец символов")
+		return apperrors.ErrSpecialCharacters
 	}
 
-	if req.Price <= 0 {
-		return errors.New("цена должна быть больше нуля")
-	}
 	return nil
 }
 
@@ -158,7 +159,7 @@ func (s *medicineService) UpdateAvgRating(medicineID uint, avg float64) (*models
 		return nil, err
 	}
 	med.AvgRating = avg
-	if err := s.medicine.MedUpdate(medicineID, *med); err != nil {
+	if err := s.medicine.MedUpdate(medicineID, med); err != nil {
 		return nil, err
 	}
 	return med, nil

@@ -25,7 +25,7 @@ func (h *PromocodeHandler) RegisterRoutes(r *gin.Engine) {
 }
 
 func (h *PromocodeHandler) CreatePromo(c *gin.Context) {
-	var req models.PromocodeUpsert
+	var req models.PromocodeCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -44,6 +44,36 @@ func (h *PromocodeHandler) GetAll(c *gin.Context) {
 	promo, err := h.promocode.GetAll()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, promo)
+}
+
+func (h *PromocodeHandler) GetByCode(c *gin.Context) {
+	code := c.Query("code")
+
+	promo, err := h.promocode.GetByCode(code)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, promo)
+}
+
+func (h *PromocodeHandler) Update(c *gin.Context) {
+	var req models.PromocodeUpdate
+	code := c.Query("code")
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	promo, err := h.promocode.Update(code, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
